@@ -226,7 +226,6 @@ Route::middleware(['admin', 'admin.permission'])->group(function () {
         Route::get('check-invoice', 'checkInvoice')->name('check.invoice');
     });
 
-
     //Manage Sales
     Route::controller('SaleController')->name('sale.')->prefix('sale')->group(function () {
         Route::get('all', 'index')->name('index');
