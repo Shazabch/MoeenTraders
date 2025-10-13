@@ -21,3 +21,4 @@ yarn-error.log
 /.vscode
 /storage
 /composer.lock
+bootstrap/cache
