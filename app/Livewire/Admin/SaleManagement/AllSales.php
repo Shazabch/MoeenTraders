@@ -130,7 +130,7 @@ class AllSales extends Component
     public function loadSales()
     {
         $this->sales = Sale::with(['customer', 'warehouse'])
-            ->where(function ($query) {
+            ->where('status','!=','pending')->where(function ($query) {
                 $query->where('invoice_no', 'like', '%' . $this->searchTerm . '%')
                     ->orWhereHas('customer', function ($q) {
                         $q->where('name', 'like', '%' . $this->searchTerm . '%');

@@ -90,6 +90,31 @@
             }
         ]
     },
+     "manage_orders": {
+        "title": "Orders",
+        "icon": "la la-shopping-cart",
+        "menu_active": [
+            "admin.order.*"
+        ],
+        "submenu": [
+            {
+                "keyword": [
+                    "Orders",
+                    "Manage orders",
+                    "Sale Configuration",
+                    "Add order",
+                    "Edit order"
+                ],
+                "title": "All Orders",
+                "route_name": "admin.order.index",
+                "menu_active": [
+                    "admin.order.index",
+                    "admin.order.create",
+                    "admin.order.edit"
+                ]
+            }
+        ]
+    },
     "manage_purchase": {
         "title": "Manage Purchases",
         "icon": "la la-shopping-bag",

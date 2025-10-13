@@ -38,8 +38,8 @@ class AdminController extends Controller
         $widget['total_purchase_return']       = PurchaseReturn::sum('receivable_amount');
         $widget['total_purchase_return_count'] = PurchaseReturn::count();
 
-        $widget['total_sale_count']        = Sale::count();
-        $widget['total_sale']              = Sale::sum('receivable_amount');
+        $widget['total_sale_count']        = Sale::where('status','!=','pending')->count();
+        $widget['total_sale']              = Sale::where('status','!=','pending')->sum('receivable_amount');
         $widget['total_sale_return_count'] = SaleReturn::count();
         $widget['total_sale_return']       = SaleReturn::sum('payable_amount');
 
@@ -82,7 +82,7 @@ class AdminController extends Controller
             ->get();
 
 
-        $sales = Sale::whereDate('sale_date', '>=', $request->start_date)
+        $sales = Sale::where('status','!=','pending')->whereDate('sale_date', '>=', $request->start_date)
             ->whereDate('sale_date', '<=', $request->end_date)
             ->selectRaw('SUM(total_price) AS amount')
             ->selectRaw("DATE_FORMAT(sale_date, '{$format}') as created_on")
@@ -133,7 +133,7 @@ class AdminController extends Controller
             $dates = $this->getAllMonths($request->start_date, $request->end_date);
         }
 
-        $saleData   = Sale::whereDate('sale_date', '>=', $request->start_date)
+        $saleData   = Sale::where('status','!=','pending')->whereDate('sale_date', '>=', $request->start_date)
             ->whereDate('sale_date', '<=', $request->end_date)
             ->selectRaw('SUM(total_price) AS amount')
             ->selectRaw("DATE_FORMAT(sale_date, '{$format}') as created_on")

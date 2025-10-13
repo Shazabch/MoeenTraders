@@ -76,8 +76,6 @@ Route::middleware(['admin', 'admin.permission'])->group(function () {
         Route::get('{user}/salary', 'salary')->name('salary');
         Route::get('/admin/attendance', 'attendance')->name('attendance');
         Route::get('/clock-in', 'clockIn')->name('clock-in');
-
-
     });
 
     Route::controller('RolesController')->prefix('roles')->name('roles.')->group(function () {
@@ -242,6 +240,27 @@ Route::middleware(['admin', 'admin.permission'])->group(function () {
 
         Route::get('last-invoice', 'lastInvoice')->name('last.invoice');
     });
+    //Manage Orders
+    Route::controller('OrderController')->name('order.')->prefix('order')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('pdf', 'salePDF')->name('pdf');
+        Route::get('csv', 'saleCSV')->name('csv');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/store', 'store')->name('store');
+
+        Route::get('/edit/{id}', 'edit')->name('edit');
+        Route::post('/update/{id}', 'update')->name('update');
+        Route::get('pdf/{id}', 'downloadInvoice')->name('invoice.pdf');
+        Route::get('/search-product', 'searchProduct')->name('search.product');
+        Route::get('search-customer', 'searchCustomer')->name('search.customer');
+
+        Route::get('last-invoice', 'lastInvoice')->name('last.invoice');
+
+        Route::get('/invoice/{id}', 'downloadInvoice')->name('invoice');
+
+        Route::post('/update-status/{id}', 'updateStatus')->name('update.status');
+    });
+
 
     //Manage Sale Return
     Route::controller('SaleReturnController')->name('sale.return.')->prefix('sale-return')->group(function () {

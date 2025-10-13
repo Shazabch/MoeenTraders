@@ -27,7 +27,7 @@ class SaleController extends Controller
 
     protected function getSales()
     {
-        return Sale::searchable(['invoice_no', 'due_amount', 'customer:name,mobile', 'warehouse:name'])->dateFilter('sale_date')->with('customer', 'warehouse', 'saleReturn')->orderBy('id', 'desc');
+        return Sale::searchable(['invoice_no', 'due_amount', 'customer:name,mobile', 'warehouse:name'])->dateFilter('sale_date')->where('status','!=','pending')->with('customer', 'warehouse', 'saleReturn')->orderBy('id', 'desc');
     }
 
     public function index()

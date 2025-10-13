@@ -180,6 +180,8 @@ class PermissionsTableSeeder extends Seeder
             ['id' => 232, 'name' => 'Service Stock Edit', 'group' => 'ServiceStockController', 'code' => 'admin.manage_stock_in.edit'],
             ['id' => 233, 'name' => 'Mark Attendance', 'group' => 'AttendanceController', 'code' => 'admin.staff.clock-in'],
             ['id' => 234, 'name' => 'All Attendance', 'group' => 'AttendanceController', 'code' => 'admin.staff.attendance'],
+            ['id' => 235, 'name' => 'All Orders', 'group' => 'OrderController', 'code' => 'admin.order.index'],
+            ['id' => 236, 'name' => 'Book Order', 'group' => 'OrderController', 'code' => 'admin.order.create'],
 
 
         ];
