@@ -12,6 +12,7 @@ class VehicleAssignment extends Model
         'vehicle_id',
         'batch_id',
         'assigned_by',
+        'assigned_to',
         'assigned_at',
         'started_at',
         'completed_at',
@@ -43,7 +44,10 @@ class VehicleAssignment extends Model
     {
         return $this->belongsTo(Admin::class, 'assigned_by');
     }
-
+    public function assignedTo(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class, 'assigned_to');
+    }
     public function containers(): HasMany
     {
         return $this->hasMany(VehicleContainer::class, 'assignment_id');

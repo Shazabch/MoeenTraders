@@ -3,7 +3,7 @@
 <div class="row">
     <div class="col-lg-12">
         <div class="card b-radius--10">
-            <div class="card-body p-0">
+            <div class="card-body p-4">
                 <form action="{{ isset($vehicle) ? route('admin.vehicle.update', $vehicle->id) : route('admin.vehicle.store') }}"
                       method="POST">
                     @csrf

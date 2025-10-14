@@ -50,3 +50,8 @@ Route::controller(OrderController::class)->group(function () {
 Route::controller(AdminController::class)->group(function () {
     Route::get('dashboard', 'dashboard')->name('dashboard');
 });
+// web.php or api.php
+Route::get('/product/{id}/title', function ($id) {
+    return response()->json(['title' => getProductTitle($id)]);
+});
+

@@ -53,11 +53,11 @@ class DeliveryBatchController extends Controller
 
             // Calculate totals
             $orders = Sale::whereIn('id', $request->orders)->get();
-            $totalAmount = $orders->sum('grand_total');
+            $totalAmount = $orders->sum('total_price');
 
             // Create batch
             $batch = DeliveryBatch::create([
-                'created_by' => auth()->id(),
+                'created_by' => auth()->guard('admin')->id(),
                 'area_id' => $request->area_id,
                 'delivery_date' => $request->delivery_date,
                 'notes' => $request->notes,

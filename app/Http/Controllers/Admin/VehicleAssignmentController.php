@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Admin;
 use App\Models\VehicleAssignment;
 use App\Models\VehicleContainer;
 use App\Models\ContainerItem;
@@ -10,7 +11,9 @@ use App\Models\DeliveryBatch;
 use App\Models\Vehicle;
 use App\Models\Sale;
 use App\Models\Product;
+use App\Models\Role;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class VehicleAssignmentController extends Controller
@@ -18,9 +21,13 @@ class VehicleAssignmentController extends Controller
     public function index()
     {
         $pageTitle = 'Vehicle Assignments';
-        $assignments = VehicleAssignment::with(['vehicle', 'batch', 'assignedBy'])
-            ->latest()
-            ->paginate(getPaginate());
+        $query = VehicleAssignment::query();
+        $user=Auth::guard('admin')->user();
+        if($user->role_id!=0){
+            $query->where('assigned_to',$user->id);
+        }
+
+        $assignments = $query->with(['vehicle', 'batch', 'assignedBy'])->latest()->paginate(getPaginate());
 
         return view('admin.delivery.assignment.index', compact('pageTitle', 'assignments'));
     }
@@ -38,6 +45,9 @@ class VehicleAssignmentController extends Controller
         }
 
         $vehicles = Vehicle::where('status', 'available')->get();
+        $salemanRole = Role::firstOrCreate(['name' => 'Sales Man']);
+
+        $salesmans = Admin::where('role_id', $salemanRole->id)->get();
 
         // Check if there are available vehicles
         if ($vehicles->isEmpty()) {
@@ -45,7 +55,7 @@ class VehicleAssignmentController extends Controller
             return redirect()->route('admin.delivery.batch.show', $batchId)->withNotify($notify);
         }
 
-        return view('admin.delivery.assignment.create', compact('pageTitle', 'batch', 'vehicles'));
+        return view('admin.delivery.assignment.create', compact('pageTitle', 'batch', 'vehicles','salesmans'));
     }
 
     public function store(Request $request)
@@ -53,6 +63,7 @@ class VehicleAssignmentController extends Controller
         $request->validate([
             'batch_id' => 'required|exists:delivery_batches,id',
             'vehicle_id' => 'required|exists:vehicles,id',
+            'assigned_to' => 'required|exists:admins,id',
             'starting_km' => 'nullable|numeric|min:0',
             'containers' => 'required|array|min:1',
             'containers.*.name' => 'required|string|max:255',
@@ -71,6 +82,7 @@ class VehicleAssignmentController extends Controller
 
             $batch = DeliveryBatch::with(['batchOrders'])->findOrFail($request->batch_id);
             $vehicle = Vehicle::findOrFail($request->vehicle_id);
+            $saleman = Admin::findOrFail($request->assigned_to);
 
             // Check if batch already assigned
             if ($batch->vehicleAssignment) {
@@ -85,6 +97,13 @@ class VehicleAssignmentController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Selected vehicle is not available'
+                ], 400);
+            }
+             // Check if batch already assigned
+            if (!$saleman) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Saleman not Found'
                 ], 400);
             }
 
@@ -130,7 +149,8 @@ class VehicleAssignmentController extends Controller
             $assignment = VehicleAssignment::create([
                 'vehicle_id' => $request->vehicle_id,
                 'batch_id' => $request->batch_id,
-                'assigned_by' => auth()->id(),
+                'assigned_to' => $request->assigned_to,
+                'assigned_by' => auth()->guard('admin')->id(),
                 'assigned_at' => now(),
                 'starting_km' => $request->starting_km ?? 0,
                 'status' => 'assigned',

@@ -44,6 +44,13 @@
                             <small class="text-muted">{{ showDateTime($assignment->assigned_at, 'd M, Y h:i A') }}</small>
                         </div>
                     </div>
+                     <div class="col-md-3">
+                        <div class="info-box">
+                            <label>@lang('Assigned To')</label>
+                            <h6>{{ $assignment->assignedTo->name ?? 'N/A' }}</h6>
+                            <small class="text-muted">{{ showDateTime($assignment->assigned_at, 'd M, Y h:i A') }}</small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -102,9 +109,9 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <strong>{{ $item->product->name ?? 'N/A' }}</strong>
+                                        <!-- <strong>{{ $item->product->name ?? 'N/A' }}</strong> -->
                                         @if($item->product)
-                                        <br><small class="text-muted">SKU: {{ $item->product->sku }}</small>
+                                        <br><small class="text-muted">{{ getProductTitle($item->product->id) }}</small>
                                         @endif
                                     </td>
                                     <td>
@@ -115,11 +122,11 @@
                                     </td>
                                     <td>
                                         @if(($item->delivered_quantity ?? 0) == $item->quantity)
-                                            <span class="badge badge--success">Delivered</span>
+                                            <span class="badge bg--success">Delivered</span>
                                         @elseif(($item->delivered_quantity ?? 0) > 0)
-                                            <span class="badge badge--warning">Partial</span>
+                                            <span class="badge bg--warning">Partial</span>
                                         @else
-                                            <span class="badge badge--secondary">Pending</span>
+                                            <span class="badge bg--secondary">Pending</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -176,7 +183,7 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <strong>{{ gs('cur_sym') }}{{ showAmount($batchOrder->sale->grand_total) }}</strong>
+                                    <strong> {{ showAmount($batchOrder->sale->total_price) }}</strong>
                                 </td>
                                 <td>
                                     <span class="badge badge--{{ $batchOrder->delivery_status == 'delivered' ? 'success' : 'warning' }}">
@@ -296,7 +303,7 @@
                     </div>
                     <div class="summary-item">
                         <span>@lang('Total Amount')</span>
-                        <strong class="text--primary">{{ gs('cur_sym') }}{{ showAmount($assignment->batch->total_amount) }}</strong>
+                        <strong class="text--primary">{{ showAmount($assignment->batch->total_amount) }}</strong>
                     </div>
                 </div>
             </div>

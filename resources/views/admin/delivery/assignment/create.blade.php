@@ -23,7 +23,7 @@
                     </div>
                     <div class="info-item">
                         <label>@lang('Total Amount')</label>
-                        <h6 class="text--primary">{{ gs('cur_sym') }}{{ showAmount($batch->total_amount) }}</h6>
+                        <h6 class="text--primary">{{ showAmount($batch->total_amount) }}</h6>
                     </div>
                     @if($batch->area)
                     <div class="info-item">
@@ -45,7 +45,7 @@
                                 <br>
                                 <small class="text-muted">@{{ order.sale.customer.name }}</small>
                             </div>
-                            <span class="badge badge--success">{{ gs('cur_sym') }}@{{ formatPrice(order.sale.grand_total) }}</span>
+                            <span class=" text--success">{{ gs('cur_sym') }} @{{ formatPrice(order.sale.total_price) }}</span>
                         </div>
                     </div>
                 </div>
@@ -72,6 +72,17 @@
                                     <option value="">@lang('Select Vehicle')</option>
                                     <option v-for="vehicle in vehicles" :key="vehicle.id" :value="vehicle.id">
                                         @{{ vehicle.vehicle_number }} - @{{ vehicle.driver_name }} (@{{ vehicle.vehicle_type }})
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                         <div class="col-md-6">
+                            <div class="form-group">
+                                <label>@lang('Select Sales Man') <span class="text--danger">*</span></label>
+                                <select class="form-control" v-model="assignmentData.assigned_to" required>
+                                    <option value="">@lang('Select Sales Man')</option>
+                                    <option v-for="user in salesmans" :key="user.id" :value="user.id">
+                                        @{{ user.name }}
                                     </option>
                                 </select>
                             </div>
@@ -142,14 +153,14 @@
                                         class="item-row">
 
                                         <div class="row g-2">
-                                            <div class="col-md-3">
+                                            <div class="col-md-6">
                                                 <select class="form-control form-control-sm" v-model="item.type" required>
                                                     <option value="order">@lang('Order Item')</option>
                                                     <option value="extra">@lang('Extra Stock')</option>
                                                 </select>
                                             </div>
 
-                                            <div class="col-md-3" v-if="item.type === 'order'">
+                                            <div class="col-md-6" v-if="item.type === 'order'">
                                                 <select class="form-control form-control-sm" v-model="item.sale_id">
                                                     <option value="">@lang('Select Order')</option>
                                                     <option v-for="order in batchOrders" :key="order.id" :value="order.sale_id">
@@ -158,7 +169,7 @@
                                                 </select>
                                             </div>
 
-                                            <div :class="item.type === 'order' ? 'col-md-3' : 'col-md-6'">
+                                            <div :class="item.type === 'order' ? 'col-md-6' : 'col-md-6'">
                                                 <select class="form-control form-control-sm" v-model="item.product_id" required>
                                                     <option value="">@lang('Select Product')</option>
                                                     <option v-for="product in availableProducts" :key="product.id" :value="product.id">
@@ -167,7 +178,7 @@
                                                 </select>
                                             </div>
 
-                                            <div class="col-md-2">
+                                            <div class="col-md-6">
                                                 <input
                                                     type="number"
                                                     class="form-control form-control-sm"
@@ -473,10 +484,12 @@
             return {
                 batchOrders: @json($batch->batchOrders),
                 vehicles: @json($vehicles),
+                salesmans: @json($salesmans),
                 allProducts: [],
                 assignmentData: {
                     batch_id: {{ $batch->id }},
                     vehicle_id: '',
+                    assigned_to: '',
                     starting_km: '',
                     containers: [
                         {
@@ -642,6 +655,7 @@
                 formData.append('_token', '{{ csrf_token() }}');
                 formData.append('batch_id', this.assignmentData.batch_id);
                 formData.append('vehicle_id', this.assignmentData.vehicle_id);
+                formData.append('assigned_to', this.assignmentData.assigned_to);
                 formData.append('starting_km', this.assignmentData.starting_km || 0);
                 formData.append('notes', this.assignmentData.notes || '');
 

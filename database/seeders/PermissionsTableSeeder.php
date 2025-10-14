@@ -191,6 +191,7 @@ class PermissionsTableSeeder extends Seeder
             ['id' => 243, 'name' => 'Get Orders By Area', 'group' => 'DeliveryBatchController', 'code' => 'admin.delivery.batch.orders.by.area'],
             ['id' => 244, 'name' => 'Update Batch Order Sequence', 'group' => 'DeliveryBatchController', 'code' => 'admin.delivery.batch.update.sequence'],
             ['id' => 245, 'name' => 'All Vehicle Assignments', 'group' => 'VehicleAssignmentController', 'code' => 'admin.delivery.assignment.index'],
+
             ['id' => 246, 'name' => 'Create Vehicle Assignment', 'group' => 'VehicleAssignmentController', 'code' => 'admin.delivery.assignment.create'],
             ['id' => 247, 'name' => 'Store Vehicle Assignment', 'group' => 'VehicleAssignmentController', 'code' => 'admin.delivery.assignment.store'],
             ['id' => 248, 'name' => 'View Vehicle Assignment', 'group' => 'VehicleAssignmentController', 'code' => 'admin.delivery.assignment.show'],

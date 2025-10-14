@@ -22,7 +22,7 @@
                     </li>
                     <li class="list-group-item d-flex justify-content-between">
                         <span>@lang('Total Amount')</span>
-                        <strong class="text--primary">{{ gs('cur_sym') }}{{ showAmount($batch->total_amount) }}</strong>
+                        <strong class="text--primary">{{ showAmount($batch->total_amount) }}</strong>
                     </li>
                     <li class="list-group-item d-flex justify-content-between">
                         <span>@lang('Area')</span>
@@ -111,9 +111,9 @@
                                         <span class="badge badge--dark">{{ $batchOrder->sort_order }}</span>
                                     </td>
                                     <td>
-                                        <a href="{{ route('admin.order.edit', $batchOrder->sale->id) }}" target="_blank">
+                                        <!-- <a href="{{ route('admin.order.edit', $batchOrder->sale->id) }}" target="_blank"> -->
                                             <strong>#{{ $batchOrder->sale->invoice_no }}</strong>
-                                        </a>
+                                        <!-- </a> -->
                                     </td>
                                     <td>
                                         {{ $batchOrder->sale->customer->name }}<br>
@@ -127,10 +127,10 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="badge badge--primary">{{ $batchOrder->sale->saleDetails->count() }} items</span>
+                                        <span class="badge bg--primary">{{ $batchOrder->sale->saleDetails->count() }} items</span>
                                     </td>
                                     <td>
-                                        <strong>{{ gs('cur_sym') }}{{ showAmount($batchOrder->sale->grand_total) }}</strong>
+                                        <strong>{{ showAmount($batchOrder->sale->total_price) }}</strong>
                                     </td>
                                     <td>
                                         @php
@@ -151,7 +151,7 @@
                                         <strong>@lang('Products'):</strong>
                                         @foreach($batchOrder->sale->saleDetails as $detail)
                                             <span class="badge badge--dark">
-                                                {{ $detail->product->name }} × {{ $detail->quantity }}
+                                                {{ getProductTitle($detail->product->id) }} × {{ $detail->quantity }}
                                             </span>
                                         @endforeach
                                     </td>

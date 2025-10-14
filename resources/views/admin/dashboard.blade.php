@@ -1,6 +1,8 @@
 @extends('admin.layouts.app')
 
 @section('panel')
+
+    @permit('admin.dashboard')
     <div class="row gy-4">
         <div class="col-xxl-3 col-sm-6">
             <x-widget value="{{ $widget['total_product'] }}" title="Total Products" style="6" link="{{ route('admin.product.index') }}" icon="las la-box" bg="primary" />
@@ -329,6 +331,7 @@
             </div>
         </div>
     </div>
+     @endpermit
 @endsection
 
 @push('script-lib')

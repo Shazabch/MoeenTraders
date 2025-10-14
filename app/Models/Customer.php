@@ -15,10 +15,19 @@ class Customer extends Model
     use ActionTakenBy, UserNotify;
     use SoftDeletes;
 
+
     public function area()
     {
-        return $this->belongsTo(Area::class);
+        return $this->hasOneThrough(
+            Area::class,
+            AreaCustomer::class,
+            'customer_id', // Foreign key on area_customer table
+            'id',           // Foreign key on areas table
+            'id',           // Local key on customers table
+            'area_id'       // Local key on area_customer table
+        );
     }
+
     public function sale()
     {
         return $this->hasMany(Sale::class);
