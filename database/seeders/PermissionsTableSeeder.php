@@ -182,7 +182,6 @@ class PermissionsTableSeeder extends Seeder
             ['id' => 235, 'name' => 'All Orders', 'group' => 'OrderController', 'code' => 'admin.order.index'],
             ['id' => 236, 'name' => 'Book Order', 'group' => 'OrderController', 'code' => 'admin.order.create'],
 
-            // Delivery System Permissions (237-276)
             ['id' => 237, 'name' => 'All Delivery Batches', 'group' => 'DeliveryBatchController', 'code' => 'admin.delivery.batch.index'],
             ['id' => 238, 'name' => 'Create Delivery Batch', 'group' => 'DeliveryBatchController', 'code' => 'admin.delivery.batch.create'],
             ['id' => 239, 'name' => 'Store Delivery Batch', 'group' => 'DeliveryBatchController', 'code' => 'admin.delivery.batch.store'],
