@@ -1,8 +1,13 @@
 <?php
 
 use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\DeliveryBatchController;
+use App\Http\Controllers\Admin\DeliveryDashboardController;
+use App\Http\Controllers\Admin\DeliveryTrackingController;
 use App\Http\Controllers\Admin\PdfController;
 use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\Admin\VehicleAssignmentController;
+use App\Http\Controllers\Admin\VehicleController;
 use App\Http\Controllers\CustomerViewController;
 use App\Http\Controllers\SupplierViewController;
 use App\Livewire\Admin\CustomerTransactions\CustomerTransaction;
@@ -11,6 +16,7 @@ use App\Livewire\Admin\SupplierTransactions\SupplierTransaction;
 use App\Models\Bank;
 use App\Models\Customer;
 use App\Models\CustomerTransaction as ModelsCustomerTransaction;
+use App\Models\Sale;
 use App\Models\Supplier;
 use App\Models\Warehouse;
 use Illuminate\Support\Facades\Route;
@@ -261,7 +267,12 @@ Route::middleware(['admin', 'admin.permission'])->group(function () {
         Route::post('/update-status/{id}', 'updateStatus')->name('update.status');
     });
 
-
+    Route::controller('AreaController')->prefix('areas')->name('areas.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::put('{area}', 'update')->name('update');
+        Route::delete('{area}', 'destroy')->name('destroy');
+    });
     //Manage Sale Return
     Route::controller('SaleReturnController')->name('sale.return.')->prefix('sale-return')->group(function () {
         Route::get('all', 'index')->name('index');
@@ -290,7 +301,81 @@ Route::middleware(['admin', 'admin.permission'])->group(function () {
         Route::get('search-product', 'searchProduct')->name('search.product');
     });
 
+    Route::prefix('delivery/batch')->name('delivery.batch.')->group(function () {
+        Route::get('/', [DeliveryBatchController::class, 'index'])->name('index');
+        Route::get('/create', [DeliveryBatchController::class, 'create'])->name('create');
+        Route::post('/store', [DeliveryBatchController::class, 'store'])->name('store');
+        Route::get('/{id}', [DeliveryBatchController::class, 'show'])->name('show');
+        Route::post('/{id}/update', [DeliveryBatchController::class, 'update'])->name('update');
+        Route::delete('/{id}', [DeliveryBatchController::class, 'destroy'])->name('destroy');
+        Route::get('/area/{areaId}/orders', [DeliveryBatchController::class, 'getOrdersByArea'])->name('orders.by.area');
+        Route::post('/{id}/update-sequence', [DeliveryBatchController::class, 'updateOrderSequence'])->name('update.sequence');
+    });
 
+    // Vehicle Assignment Routes
+    Route::prefix('delivery/assignment')->name('delivery.assignment.')->group(function () {
+        Route::get('/', [VehicleAssignmentController::class, 'index'])->name('index');
+        Route::get('/batch/{batchId}/create', [VehicleAssignmentController::class, 'create'])->name('create');
+        Route::post('/store', [VehicleAssignmentController::class, 'store'])->name('store');
+        Route::get('/{id}', [VehicleAssignmentController::class, 'show'])->name('show');
+        Route::post('/{id}/start', [VehicleAssignmentController::class, 'startDelivery'])->name('start');
+        Route::post('/{id}/complete', [VehicleAssignmentController::class, 'completeDelivery'])->name('complete');
+        Route::post('/{id}/update-containers', [VehicleAssignmentController::class, 'updateContainers'])->name('update.containers');
+        Route::get('/{id}/status', [DeliveryTrackingController::class, 'getAssignmentStatus'])->name('status');
+        Route::get('/{id}/edit', 'VehicleAssignmentController@edit')->name('edit');
+        Route::put('/{id}', 'VehicleAssignmentController@update')->name('update');
+        Route::delete('/{id}', 'VehicleAssignmentController@destroy')->name('destroy');
+    });
+
+
+    // Delivery Tracking Routes
+    Route::prefix('delivery')->name('delivery.')->group(function () {
+        Route::post('/order/{batchOrderId}/delivered', [DeliveryTrackingController::class, 'markDelivered'])->name('order.delivered');
+        Route::post('/order/{batchOrderId}/failed', [DeliveryTrackingController::class, 'markFailed'])->name('order.failed');
+        Route::post('/order/{batchOrderId}/proof', [DeliveryTrackingController::class, 'uploadProof'])->name('order.proof');
+        Route::post('/assignment/{assignmentId}/track', [DeliveryTrackingController::class, 'trackLocation'])->name('track.location');
+        Route::get('/assignment/{assignmentId}/history', [DeliveryTrackingController::class, 'getTrackingHistory'])->name('track.history');
+    });
+
+    // Vehicle Management Routes
+    Route::prefix('vehicle')->name('vehicle.')->group(function () {
+        Route::get('/', [VehicleController::class, 'index'])->name('index');
+        Route::get('/create', [VehicleController::class, 'create'])->name('create');
+        Route::post('/store', [VehicleController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [VehicleController::class, 'edit'])->name('edit');
+        Route::post('/{id}/update', [VehicleController::class, 'update'])->name('update');
+        Route::post('/{id}/toggle-status', [VehicleController::class, 'toggleStatus'])->name('toggle.status');
+        Route::delete('/{id}', [VehicleController::class, 'destroy'])->name('destroy');
+        Route::get('/{id}/assignments', [VehicleController::class, 'assignments'])->name('assignments');
+    });
+
+    Route::get('/delivery/dashboard/data', [DeliveryDashboardController::class, 'getData'])
+        ->name('delivery.dashboard.data');
+
+    // Also add the dashboard index route
+    Route::get('/delivery/dashboard', [DeliveryDashboardController::class, 'index'])
+        ->name('delivery.dashboard.index');
+
+    // And the reports route
+    Route::get('/delivery/reports', [DeliveryDashboardController::class, 'reports'])
+        ->name('delivery.reports');
+
+    // Update existing order routes to set delivery_status
+    Route::post('/order/update-delivery-status', function (Request $request) {
+        $request->validate([
+            'order_ids' => 'required|array',
+            'order_ids.*' => 'exists:sales,id',
+            'status' => 'required|in:not_ready,ready,batched,assigned,in_transit,delivered'
+        ]);
+
+        Sale::whereIn('id', $request->order_ids)
+            ->update(['delivery_status' => $request->status]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order delivery status updated successfully'
+        ]);
+    })->name('order.update.delivery.status');
 
     // Supplier
     Route::controller('SupplierController')->name('supplier.')->prefix('supplier')->group(function () {

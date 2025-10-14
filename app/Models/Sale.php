@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\ActionTakenBy;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
 
 class Sale extends Model
@@ -55,5 +56,25 @@ class Sale extends Model
         ];
 
         return $badges[$this->status] ?? 'secondary';
+    }
+    public function area(): BelongsTo
+    {
+        return $this->belongsTo(Area::class);
+    }
+
+    public function batchOrder()
+    {
+        return $this->hasOne(BatchOrder::class, 'sale_id');
+    }
+
+    public function scopeReadyForDelivery($query)
+    {
+        return $query->where('delivery_status', 'ready')
+            ->whereNotIn('status', ['cancelled', 'delivered']);
+    }
+
+    public function scopeByDeliveryStatus($query, $status)
+    {
+        return $query->where('delivery_status', $status);
     }
 }

@@ -90,7 +90,7 @@
             }
         ]
     },
-     "manage_orders": {
+    "manage_orders": {
         "title": "Orders",
         "icon": "la la-shopping-cart",
         "menu_active": [
@@ -272,7 +272,7 @@
             "admin.supplier*"
         ]
     },
-     "attendance": {
+    "attendance": {
         "keyword": [
             "Attendance"
         ],
@@ -283,7 +283,7 @@
             "admin.staff.attednace"
         ]
     },
-         "clock-in": {
+    "clock-in": {
         "keyword": [
             "Clock In"
         ],
@@ -316,7 +316,6 @@
                 "route_name": "admin.staff.index",
                 "menu_active": "admin.staff.index"
             },
-
             {
                 "keyword": [
                     "All Roles",
@@ -335,7 +334,6 @@
             }
         ]
     },
-
     "product_adjustments": {
         "keyword": [
             "adjustment",
@@ -378,6 +376,105 @@
                 "title": "Expense Types",
                 "route_name": "admin.manage_expense_type",
                 "menu_active": "admin.manage_expense_type"
+            }
+        ]
+    },
+    "route_areas": {
+        "title": "Areas",
+        "header": "Areas & Shops",
+        "icon": "la la-globe",
+        "menu_active": [
+            "admin.areas.*"
+        ],
+        "submenu": [
+            {
+                "keyword": [
+                    "All Areas"
+                ],
+                "title": "Areas",
+                "route_name": "admin.areas.index",
+                "menu_active": "admin.areas.index"
+            }
+        ]
+    },
+
+    "delivery_management": {
+        "title": "Delivery Management",
+        "header": "Delivery & Logistics",
+        "icon": "la la-truck",
+        "menu_active": [
+            "admin.delivery.*",
+            "admin.vehicle.*"
+        ],
+        "submenu": [
+            {
+                "keyword": [
+                    "Delivery Dashboard",
+                    "Delivery Overview",
+                    "Delivery Statistics",
+                    "Delivery Analytics"
+                ],
+                "title": "Dashboard",
+                "route_name": "admin.delivery.dashboard.index",
+                "menu_active": "admin.delivery.dashboard.index"
+            },
+            {
+                "keyword": [
+                    "Delivery Batches",
+                    "Create Batch",
+                    "Manage Batches",
+                    "Batch Orders",
+                    "Group Orders"
+                ],
+                "title": "Delivery Batches",
+                "route_name": "admin.delivery.batch.index",
+                "menu_active": [
+                    "admin.delivery.batch.index",
+                    "admin.delivery.batch.create",
+                    "admin.delivery.batch.show"
+                ]
+            },
+            {
+                "keyword": [
+                    "Vehicle Assignments",
+                    "Assign Vehicle",
+                    "Vehicle Loading",
+                    "Container Management"
+                ],
+                "title": "Assignments",
+                "route_name": "admin.delivery.assignment.index",
+                "menu_active": [
+                    "admin.delivery.assignment.index",
+                    "admin.delivery.assignment.create",
+                    "admin.delivery.assignment.show"
+                ]
+            },
+            {
+                "keyword": [
+                    "Vehicles",
+                    "Manage Vehicles",
+                    "Vehicle Management",
+                    "Add Vehicle",
+                    "Vehicle Fleet"
+                ],
+                "title": "Vehicles",
+                "route_name": "admin.vehicle.index",
+                "menu_active": [
+                    "admin.vehicle.index",
+                    "admin.vehicle.create",
+                    "admin.vehicle.edit"
+                ]
+            },
+            {
+                "keyword": [
+                    "Delivery Reports",
+                    "Performance Reports",
+                    "Delivery Analytics",
+                    "Vehicle Reports"
+                ],
+                "title": "Reports",
+                "route_name": "admin.delivery.reports",
+                "menu_active": "admin.delivery.reports"
             }
         ]
     },

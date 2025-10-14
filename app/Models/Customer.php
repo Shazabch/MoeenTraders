@@ -14,6 +14,11 @@ class Customer extends Model
 {
     use ActionTakenBy, UserNotify;
     use SoftDeletes;
+
+    public function area()
+    {
+        return $this->belongsTo(Area::class);
+    }
     public function sale()
     {
         return $this->hasMany(Sale::class);
