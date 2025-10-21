@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             GeneralSettingsTableSeeder::class,
             NotificationTemplatesTableSeeder::class,
             PermissionsTableSeeder::class,
+            VariantCategorySeeder::class,
         ]);
 
     }
