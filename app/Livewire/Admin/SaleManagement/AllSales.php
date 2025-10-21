@@ -504,6 +504,7 @@ class AllSales extends Component
             $sale->driver_contact = $this->driver_contact;
             $sale->fare = $this->fare;
             $sale->loading = $this->loading;
+            $sale->status = 'confirmed';
             $sale->save();
             Action::newEntry($sale, $this->saleId ? 'UPDATED' : 'CREATED');
             // Prepare sale details data
