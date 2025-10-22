@@ -16,6 +16,7 @@ use App\Livewire\Admin\WareHouse\WareHouseDetail;
 use App\Models\Action as ModelsAction;
 use App\Models\Bank;
 use App\Models\BankTransaction;
+use App\Models\Category;
 use App\Models\CustomerPayment;
 use App\Models\CustomerTransaction as ModelsCustomerTransaction;
 use App\Models\ExpenseType;
@@ -31,7 +32,11 @@ class AllSales extends Component
 {
     use DailyBookEntryTrait;
     use ManagesExpenseTransactions;
+    public $selectedCategory = '';
 
+    public $formProducts = [];
+
+    public $allProducts;
     public $sales = [];
     public $banks = [];
     public $selectedSale = null;
@@ -88,6 +93,7 @@ class AllSales extends Component
     public $selected_product_id = null;
 
     public $expense_type_id, $date_of_expense, $exp_amount, $bank_id, $expense_id;
+    public $allcategories = [];
     public $categories = [];
     public $selected_id;
 
@@ -130,7 +136,7 @@ class AllSales extends Component
     public function loadSales()
     {
         $this->sales = Sale::with(['customer', 'warehouse'])
-            ->where('status','!=','pending')->where(function ($query) {
+            ->where('status', '!=', 'pending')->where(function ($query) {
                 $query->where('invoice_no', 'like', '%' . $this->searchTerm . '%')
                     ->orWhereHas('customer', function ($q) {
                         $q->where('name', 'like', '%' . $this->searchTerm . '%');
@@ -178,6 +184,7 @@ class AllSales extends Component
         $lastSale      = Sale::orderBy('invoice_no', 'DESC')->first();
         $lastInvoiceNo = $lastSale->invoice_no ?? 0;
         $this->invoice_no = generateInvoiceNumber($lastInvoiceNo);
+        $this->getCategories();
         $this->getProductsSearchable();
     }
     public function editSale($id)
@@ -267,9 +274,29 @@ class AllSales extends Component
 
         $this->searchResults = $products->with('unit')->get();
     }
-    public function getProductsSearchable()
+   
+    public function getCategories()
+    {
+
+       
+        $this->allcategories = Category::query()
+            ->get()->map(function ($category) {
+                return [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                ];
+            });
+    }
+    public function updatedSelectedCategory($value)
+    {
+
+        $this->getProductsSearchable();
+    }
+     public function getProductsSearchable()
 
     {
+        $this->searchAbleProducts = [];
+        $categoryId = $this->selectedCategory;
         $warehouse = $this->warehouse_id;
 
         if (!$warehouse) {
@@ -277,16 +304,16 @@ class AllSales extends Component
             $this->dispatch('notify', status: 'error', message: 'Select Whereouse First');
         } else {
 
-            $this->searchAbleProducts = Product::query()->whereHas('productStock', function ($q) use ($warehouse) {
-                $q->where('warehouse_id', $warehouse)->where('quantity', '>', 0);
-            })->get()->map(function ($product) {
+            $this->searchAbleProducts = Product::query()->where('category_id', $categoryId)->get()->map(function ($product) {
                 return [
                     'id' => $product->id,
                     'text' => $product->name . ' (' . $product->category?->name . ')',
                 ];
             });
         }
+        
     }
+   
 
     public function updated($name, $value)
     {

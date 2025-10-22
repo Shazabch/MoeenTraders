@@ -225,12 +225,22 @@ if (!function_exists('gourmet_cola_products')) {
 
         // Apply filter if provided
         if ($filter) {
-            return array_values(array_filter($products, function ($product) use ($filter) {
+            $products = array_values(array_filter($products, function ($product) use ($filter) {
                 return stripos($product, $filter) !== false;
             }));
         }
 
-        return $products;
+        // Add sequential SKUs: P1, P2, P3, ...
+        $productsWithSku = [];
+        foreach ($products as $index => $product) {
+            $skuNumber = $index + 1;
+            $productsWithSku[] = [
+                'name' => $product,
+                'sku' => 'P' . $skuNumber, // Example: P1, P2, P3
+            ];
+        }
+
+        return $productsWithSku;
     }
 }
 if (!function_exists('getProductTitle')) {

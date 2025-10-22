@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Action;
 use App\Models\Bank;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleDetails;
@@ -131,8 +132,9 @@ class OrderController extends Controller
         $lastInvoiceNo = @$lastSale->invoice_no;
         $invoiceNumber = generateInvoiceNumber($lastInvoiceNo);
         $customers     = Customer::select('id', 'name', 'mobile')->get();
+        $categories      = Category::all();
         $products      = Product::with('unit')
-            ->select('id', 'name', 'sku', 'selling_price', 'image', 'unit_id')
+            ->select('id', 'name', 'sku', 'selling_price', 'image', 'unit_id','category_id')
             ->orderBy('name')
             ->get();
 
@@ -144,7 +146,7 @@ class OrderController extends Controller
             $product->category_name = $product->category->name ?? 'No Category';
         }
 
-        return view('admin.order.form', compact('pageTitle', 'invoiceNumber', 'customers', 'products'));
+        return view('admin.order.form', compact('pageTitle', 'invoiceNumber', 'customers', 'products','categories'));
     }
 
     public function edit($id)
@@ -155,6 +157,7 @@ class OrderController extends Controller
             ->firstOrFail();
         $pageTitle = 'Edit Order';
         $customers = Customer::select('id', 'name', 'mobile')->get();
+        $categories      = Category::all();
         $products  = Product::with('unit')
             ->select('id', 'name', 'sku', 'selling_price', 'image', 'unit_id')
             ->orderBy('name')
@@ -168,7 +171,7 @@ class OrderController extends Controller
             $product->category_name = $product->category->name ?? 'No Category';
         }
 
-        return view('admin.order.form', compact('pageTitle', 'sale', 'customers', 'products'));
+        return view('admin.order.form', compact('pageTitle', 'sale', 'customers', 'products','categories'));
     }
 
     public function store(Request $request)

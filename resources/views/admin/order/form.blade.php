@@ -1,14 +1,25 @@
 @extends('admin.layouts.app')
 @section('panel')
 <div class="row" id="orderApp">
-    <!-- Left Side: Product Catalog -->
     <div class="col-lg-4 mb-30">
         <div class="card h-100">
             <div class="card-header">
                 <h5 class="card-title">@lang('Product Catalog')</h5>
             </div>
             <div class="card-body">
-                <!-- Search Box -->
+                <div class="form-group">
+                    <label>@lang('Filter by Category')</label>
+                    <select v-model="selectedCategory" class="form-control">
+                        <option value="">@lang('All Categories')</option>
+                        <option
+                            v-for="category in categories"
+                            :key="category.id"
+                            :value="category.id">
+                            @{{ category.name }}
+                        </option>
+                    </select>
+                </div>
+
                 <div class="form-group">
                     <div class="input-group">
                         <span class="input-group-text"><i class="las la-search"></i></span>
@@ -20,7 +31,6 @@
                     </div>
                 </div>
 
-                <!-- Product List -->
                 <div class="product-catalog">
                     <div
                         v-for="product in filteredProducts"
@@ -50,7 +60,6 @@
         </div>
     </div>
 
-    <!-- Right Side: Order Form -->
     <div class="col-lg-8 mb-30">
         <div class="card">
             <div class="card-body">
@@ -115,7 +124,6 @@
                         </div>
                     </div>
 
-                    <!-- Selected Products Table -->
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="table-responsive">
@@ -141,7 +149,7 @@
                                                 <input
                                                     type="number"
                                                     class="form-control"
-                                                     style="width:100px"
+                                                    style="width:100px"
                                                     v-model.number="item.quantity"
                                                     @input="calculateTotal(index)"
                                                     min="1"
@@ -162,7 +170,7 @@
 
                                             </td>
                                             <td>
-                                               <span>@{{formatPrice(item.total)}}</span>
+                                                <span>@{{formatPrice(item.total)}}</span>
                                             </td>
                                             <td>
                                                 <button
@@ -184,7 +192,6 @@
                         </div>
                     </div>
 
-                    <!-- Summary Section -->
                     <div class="row">
                         <div class="col-md-12">
                             <div class="order-summary">
@@ -306,7 +313,8 @@
 @push('style')
 <style>
     .product-catalog {
-        max-height: calc(100vh - 300px);
+        max-height: calc(100vh - 360px);
+        /* Adjusted height for category dropdown */
         overflow-y: auto;
         padding-right: 5px;
     }
@@ -398,6 +406,8 @@
                 searchQuery: '',
                 products: @json($products ?? []),
                 customers: @json($customers ?? []),
+                categories: @json($categories ?? []), // NEW: Data for categories
+                selectedCategory: '', // NEW: State for category filter
                 selectedProducts: [],
                 orderData: {
                     invoice_no: @json($sale->invoice_no ?? $invoiceNumber),
@@ -412,15 +422,39 @@
                 isEdit: @json(isset($sale))
             }
         },
+        watch: {
+            selectedCategory(newVal, oldVal) {
+                // Log for category change
+                console.log(`Category filter changed from ${oldVal === '' ? 'All' : oldVal} to ${newVal === '' ? 'All' : newVal}`);
+            }
+        },
         computed: {
             filteredProducts() {
-                if (!this.searchQuery) {
-                    return this.products;
+                let filtered = this.products;
+
+                // 1. Filter by Category
+                if (this.selectedCategory) {
+                    const categoryId = parseInt(this.selectedCategory);
+                    filtered = filtered.filter(product =>
+                        // Ensure product.category_id is also treated as a number for strict comparison
+                        parseInt(product.category_id) === categoryId
+                    );
                 }
-                const query = this.searchQuery.toLowerCase();
-                return this.products.filter(product =>
-                    product.name.toLowerCase().includes(query)
-                );
+
+                // 2. Filter by Search Query
+                if (this.searchQuery) {
+                    const query = this.searchQuery.toLowerCase();
+                    filtered = filtered.filter(product =>
+                        product.name.toLowerCase().includes(query) ||
+                        product.display_title.toLowerCase().includes(query) ||
+                        (product.sku && product.sku.toLowerCase().includes(query)) // Add SKU search if applicable
+                    );
+                }
+
+                // Log the final product count after all filters
+                console.log(`Product Catalog: ${filtered.length} products displayed (Category: ${this.selectedCategory || 'All'}, Search: "${this.searchQuery}")`);
+
+                return filtered;
             },
             totalPrice() {
                 return this.selectedProducts.reduce((sum, item) => sum + item.total, 0);
@@ -461,7 +495,10 @@
             },
             calculateTotal(index) {
                 const item = this.selectedProducts[index];
-                item.total = item.quantity * item.price;
+                // Ensure quantity and price are numbers for correct calculation
+                const quantity = parseFloat(item.quantity) || 0;
+                const price = parseFloat(item.price) || 0;
+                item.total = quantity * price;
             },
             validateDiscount() {
                 if (this.orderData.discount < 0) {
@@ -500,7 +537,7 @@
                     formData.append(`products[${index}][price]`, product.price);
                 });
 
-                // Submit form
+                // Determine the correct URL for store/update
                 const url = this.isEdit ?
                     '{{ isset($sale) ? route("admin.order.update", $sale->id) : "" }}' :
                     '{{ route("admin.order.store") }}';
@@ -533,7 +570,7 @@
                     })
                     .catch(error => {
                         this.isSubmitting = false;
-                        console.error('Error:', error);
+                        console.error('Error submitting order:', error);
 
                         if (error.errors) {
                             // Validation errors
@@ -547,8 +584,7 @@
                     });
             },
             showNotification(type, message) {
-                // Use your notification system here
-                // For now, using alert as fallback
+                // Use your notification system here (e.g., iziToast)
                 if (typeof iziToast !== 'undefined') {
                     iziToast[type]({
                         message: message,
@@ -559,43 +595,60 @@
                 }
             }
         },
-       mounted() {
-            // Debug: Check if products have image_url
-            console.log('Products loaded:', this.products.length);
+        mounted() {
+            // Initial product data log
+            console.log(`Products loaded: ${this.products.length} total products.`);
             if (this.products.length > 0) {
-                console.log('Sample product:', this.products[0]);
+                console.log('Sample product data for debugging:', this.products[0]);
             }
+            console.log(`Categories loaded: ${this.categories.length} categories.`);
 
             // Load existing sale details if editing
             @if(isset($sale))
-                console.log('Editing mode - Loading sale details');
+            console.log('Editing mode - Loading existing sale details...');
 
-                // Load sale details from server
-                this.selectedProducts = [
-                    @foreach($sale->saleDetails as $detail)
-                    {
-                        product_id: {{ $detail->product_id }},
-                        name: '{{ addslashes($detail->product->name) }}',
-                        display_title: '{{ getProductTitle($detail->product->id) }}',
-                        sku: '{{ $detail->product->sku }}',
-                        category_name: '{{ addslashes($detail->product->category->name ?? "No Category") }}',
-                        brand_name: '{{ addslashes($detail->product->brand->name ?? "No Brand") }}',
-                        unit: '{{ $detail->product->unit->name }}',
-                        quantity: {{ $detail->quantity }},
-                        price: {{ $detail->price }},
-                        total: {{ $detail->total }}
-                    }@if(!$loop->last),@endif
-                    @endforeach
-                ];
+            // Load sale details from server
+            this.selectedProducts = [
+                @foreach($sale->saleDetails as $detail) {
+                    product_id: {
+                        {
+                            $detail->product_id
+                        }
+                    },
+                    name: '{{ addslashes($detail->product->name) }}',
+                    display_title: '{{ getProductTitle($detail->product->id) }}',
+                    sku: '{{ $detail->product->sku }}',
+                    category_name: '{{ addslashes($detail->product->category->name ?? "No Category") }}',
+                    brand_name: '{{ addslashes($detail->product->brand->name ?? "No Brand") }}',
+                    unit: '{{ $detail->product->unit->name }}',
+                    quantity: {
+                        {
+                            $detail->quantity
+                        }
+                    },
+                    price: {
+                        {
+                            $detail->price
+                        }
+                    },
+                    total: {
+                        {
+                            $detail->total
+                        }
+                    }
+                }
+                @if(!$loop->last), @endif
+                @endforeach
+            ];
 
-                console.log('Sale details loaded:', this.selectedProducts);
+            console.log('Existing sale details loaded:', this.selectedProducts.length, 'items.');
 
-                // Trigger total calculation
-                this.$nextTick(() => {
-                    this.selectedProducts.forEach((item, index) => {
-                        this.calculateTotal(index);
-                    });
+            // Trigger total calculation
+            this.$nextTick(() => {
+                this.selectedProducts.forEach((item, index) => {
+                    this.calculateTotal(index);
                 });
+            });
             @endif
         }
     }).mount('#orderApp');
