@@ -249,7 +249,7 @@
                                             wire:click="addProduct({{ $product->id }})">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <span>{{ $product->name }}</span>
-                                                <small class="text-muted">{{ $product->sku }}</small>
+                                                <small class="text-muted">{{ $product->category?->name }}</small>
                                             </div>
                                         </li>
                                         @empty
