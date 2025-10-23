@@ -96,6 +96,12 @@ class AllSales extends Component
     public $allcategories = [];
     public $categories = [];
     public $selected_id;
+    public $selected_customer_id;
+
+    protected $listeners = [
+        'addNewSelectOption' => 'addNewSelectOption',
+    ];
+
 
 
     protected function rules()
@@ -266,7 +272,7 @@ class AllSales extends Component
             $query->where('category_id', $this->selectedCategory);
         }
 
-    
+
         // ✅ Optional name search
         if (!empty($this->searchQuery)) {
             $search = $this->searchQuery;
@@ -1000,6 +1006,34 @@ class AllSales extends Component
         $this->resetExcept('saleId');
         $this->loadSales();
         $this->dispatch('notify', status: 'success', message: $notification);
+    }
+   
+    public function addNewSelectOption($text,$model,$list)
+    {
+        
+     
+
+        if ($list === 'customers' && !empty($text)) {
+            $existingCustomer = Customer::where('name', $text)->first();
+
+            if ($existingCustomer) {
+                $this->$model = $existingCustomer->id;
+            } else {
+                $customer = Customer::create([
+                    'name' => $text,
+                  ]);
+
+                // reload list
+                $this->$list =Customer::select('id', 'name as text')->get()->toArray();
+
+                // select new one
+                $this->$model = $customer->id;
+
+                // refresh select2
+                $this->dispatch('re-init-select-2-component');
+                $this->dispatch('notify', status: 'success', message: 'Customer added successfully!');
+            }
+        }
     }
 
 

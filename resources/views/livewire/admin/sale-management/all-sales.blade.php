@@ -229,14 +229,14 @@
                                 <input
                                     type="text"
                                     class="form-control"
-                                    wire:model.live.debounce.700ms="searchQuery"
+                                    wire:model.live="searchQuery"
                                     placeholder="@lang('Product Name')">
                                 @error('products')
                                 <small class="text-danger">{{ $message }}</small>
                                 @enderror
 
 
-                                <div wire:loading wire:target="searchQuery" class="spinner-border text-primary spinner-border-sm position-absolute"
+                                <div wire:loading wire:target="searchQuery" class="spinner-border text--primary spinner-border-sm position-absolute"
                                     style="right:10px; top:38px;" role="status">
                                     <span class="sr-only">Loading...</span>
                                 </div>
@@ -280,12 +280,12 @@
 
                             <div class="col-xl-4 col-md-4  col-sm-6">
                                 <label>@lang('Customer')</label>
-                                <x-select2
+                                <x-select3
                                     id="product-select-select-customer"
                                     dataArray="customers"
                                     wire:model="customer_id"
                                     placeholder="Select a customer"
-                                    :allowAdd="false" />
+                                    :allowAdd="true" />
                                 @error('customer_id') <small class="text-danger">{{ $message }}</small> @enderror
                             </div>
 
@@ -434,7 +434,7 @@
 
                     <div class="col-md-12 col-sm-12">
                         <div class="form-group">
-                            <label>@lang('Total Price') ( {{number_format($total_price,2)}} )</label>
+                            <label>@lang('Total Price')</label>
                             <div class="input-group">
                                 <span class="input-group-text">{{ gs('cur_sym') }}</span>
                                 <input class="form-control" type="number" wire:model.live.debounce.700ms="total_price" readonly>
@@ -450,7 +450,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label>@lang('Due Amount') ( {{number_format($due_amount,2)}} )</label>
+                            <label>@lang('Due Amount')</label>
                             <div class="input-group">
                                 <span class="input-group-text">{{ gs('cur_sym') }}</span>
                                 <input class="form-control" type="number" wire:model.live.debounce.700ms="due_amount" readonly>

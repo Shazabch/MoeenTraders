@@ -15,6 +15,8 @@ class Customer extends Model
     use ActionTakenBy, UserNotify;
     use SoftDeletes;
 
+    protected $guarded=[];
+
 
     public function area()
     {
