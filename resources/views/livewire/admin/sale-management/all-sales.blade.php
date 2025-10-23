@@ -206,19 +206,79 @@
         </div>
     </div>
     @else
-    <div class="row gy-3">
-        <div class="col-lg-12 col-md-12 mb-30">
+    <div class="row">
+        <div class="col-lg-4 col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label>@lang('Select Variant')</label>
+                                </select>
+                                <x-select2
+                                    id="product-select-select-var"
+                                    dataArray="allcategories"
+                                    wire:model="selectedCategory"
+                                    placeholder="Select a Variant"
+                                    :allowAdd="false" />
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group position-relative">
+                                <label>@lang('Product Search')</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    wire:model.live.debounce.700ms="searchQuery"
+                                    placeholder="@lang('Product Name')">
+                                @error('products')
+                                <small class="text-danger">{{ $message }}</small>
+                                @enderror
+
+
+                                <div wire:loading wire:target="searchQuery" class="spinner-border text-primary spinner-border-sm position-absolute"
+                                    style="right:10px; top:38px;" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                                @if(!empty($searchResults))
+                                <div class="card mt-2 shadow-sm">
+                                    <ul class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                                        @forelse ($searchResults as $product)
+                                        <li class="list-group-item list-group-item-action"
+                                            style="cursor: pointer;"
+                                            wire:click="addProduct({{ $product->id }})">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>{{ $product->name }}</span>
+                                                <small class="text-muted">{{ $product->sku }}</small>
+                                            </div>
+                                        </li>
+                                        @empty
+                                        <li class="list-group-item text-muted text-center py-2">
+                                            @lang('No products found')
+                                        </li>
+                                        @endforelse
+                                    </ul>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8 col-md-8 mb-30">
             <div class="card">
                 <div class="card-body">
                     <form wire:submit.prevent="saveSale">
                         <div class="row mb-3">
-                            <div class="col-xl-3 col-sm-6">
+                            <div class="col-xl-4 col-md-4 col-sm-6">
                                 <label>@lang('Invoice No.')</label>
                                 <input type="text" class="form-control" wire:model="invoice_no" readonly>
                                 @error('invoice_no') <small class="text-danger">{{ $message }}</small> @enderror
                             </div>
 
-                            <div class="col-xl-3 col-sm-6">
+                            <div class="col-xl-4 col-md-4  col-sm-6">
                                 <label>@lang('Customer')</label>
                                 <x-select2
                                     id="product-select-select-customer"
@@ -229,7 +289,7 @@
                                 @error('customer_id') <small class="text-danger">{{ $message }}</small> @enderror
                             </div>
 
-                            <div class="col-xl-3 col-sm-6">
+                            <div class="col-xl-4 col-md-4 col-sm-6">
                                 <label>@lang('Date')</label>
                                 <x-date-picker wire-model="sale_date" placeholder="Sale Date" />
                                 @error('sale_date') <small class="text-danger">{{ $message }}</small> @enderror
@@ -248,110 +308,93 @@
                         </div>
                         --}}
                 </div>
-                <div class="row">
-                    <div class="col-xl-6 col-md-6 col-sm-6">
-                        <div class="form-group">
-                            <label>@lang('Select Category')</label>
-                            {{-- wire:model.live updates the backend immediately --}}
-                            <select wire:model.live="selectedCategory" class="form-control">
-                                <option value="">@lang('Select')</option>
-                                {{-- Iterate over the categories property from the Livewire component --}}
-                                @foreach ($allcategories as $category)
-                                <option value="{{ $category['id'] }}">{{ $category['name'] }}</option>
-                                {{-- Note: 'text' assumes the PHP component is mapping 'name' to 'text' --}}
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
 
-
-                    <div class="col-xl-6 col-md-6 col-sm-6">
-                        <div class="form-group">
-                            <label>@lang(' Product Search')</label>
-                            <x-select2
-                                id="product-select-select-sale"
-                                dataArray="searchAbleProducts"
-                                wire:model="selected_product_id"
-                                placeholder="Select a product"
-                                :allowAdd="false" />
-
-
-                            @if($searchResults && false)
-                            <input type="text" class="form-control" wire:model.live.debounce.700ms="searchQuery" placeholder="@lang('Product Name or SKU')">
-                            @error('products') <small class="text-danger">{{ $message }}</small> @enderror
-
-                            <div class="card p-2 shadow">
-                                <ul class="list-group mt-2">
-                                    @foreach ($searchResults as $product)
-                                    <li class="list-group-item" wire:click="addProduct({{ $product->id }})">
-                                        {{ $product->name }} ({{ $product->sku }})
-                                    </li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
                 {{-- Product Table --}}
 
-                <table class="table table--dark style--two">
-                    <thead class="border bg--dark">
-                        <tr>
-                            <th>@lang('Product')</th>
-                            <th>@lang('Stock')</th>
-                            <th>@lang('Quantity')</th>
-                            @if(!isWeightOff())
-                            <th>@lang('Weight Stock')</th>
-                            <th>@lang('Weight')</th>
-                            @endif
-                            <th>@lang('Price')</th>
-                            <th>@lang('Total')</th>
-                            <th>@lang('Action')</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($products as $index => $product)
-                        <tr>
-                            <td>{{ getProductTitle($product['id']) }}</td>
-                            <td>
-                                {{ $product['stock'] }}
-                            </td>
-                            <td>
-                                <input type="number" wire:model.live.debounce.700ms="products.{{ $index }}.quantity" class="form-control">
-                                @error("products.$index.quantity") <small class="text-danger">{{ $message }}</small> @enderror
-                            </td>
-                            @if(!isWeightOff())
-                            <td>
-                                {{ $product['stock_weight'] }}
-                            </td>
-                            <td>
-                                @if($product['unit'] == 'KG' || $product['unit'] == 'Kg' || $product['unit'] == 'kg')
-                                <input type="number" wire:model.live.debounce.700ms="products.{{ $index }}.net_weight" class="form-control">
-                                {{ $product['unit'] }}
-                                @error("products.$index.net_weight") <small class="text-danger">{{ $message }}</small> @enderror
+                <div class="table-responsive" style="min-height: 10px; max-height: 400px; overflow-y: auto; overflow-x: auto;">
+                    <table class="table table--dark style--two mb-0">
+                        <thead class="border bg--dark sticky-top" style="top:0; z-index:1;">
+                            <tr>
+                                <th>@lang('Product')</th>
+                                <th>@lang('Stock')</th>
+                                <th>@lang('Quantity')</th>
+                                @if(!isWeightOff())
+                                <th>@lang('Weight Stock')</th>
+                                <th>@lang('Weight')</th>
                                 @endif
-                            </td>
-                            @endif
-                            <td>
-                                <input type="text" wire:model.live.debounce.700ms="products.{{ $index }}.price" class="form-control">
-                                @error("products.$index.price") <small class="text-danger">{{ $message }}</small> @enderror
-                            </td>
+                                <th>@lang('Price')</th>
+                                <th>@lang('Total')</th>
+                                <th>@lang('Action')</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($products as $index => $product)
+                            <tr>
+                                {{-- Product --}}
+                                <td class="align-middle">{{ getProductTitle($product['id']) }}</td>
 
-                            <td>
-                                {{ number_format($products[$index]['total'], 2) }}
-                            </td>
+                                {{-- Stock --}}
+                                <td class="align-middle">{{ $product['stock'] }}</td>
 
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-danger" wire:click="removeProduct({{ $index }})">
-                                    @lang('Remove')
-                                </button>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                                {{-- Quantity --}}
+                                <td class="align-middle">
+                                    <div style="min-width:120px;">
+                                        <input type="number"
+                                            wire:model.live.debounce.700ms="products.{{ $index }}.quantity"
+                                            class="form-control form-control-sm">
+                                        <small class="text-danger" style="min-height:18px;display:block;">
+                                            @error("products.$index.quantity") {{ $message }} @enderror
+                                        </small>
+                                    </div>
+                                </td>
+
+                                {{-- Weight (if enabled) --}}
+                                @if(!isWeightOff())
+                                <td class="align-middle">{{ $product['stock_weight'] }}</td>
+                                <td class="align-middle">
+                                    @if(strtolower($product['unit']) === 'kg')
+                                    <div style="min-width:120px;">
+                                        <input type="number"
+                                            wire:model.live.debounce.700ms="products.{{ $index }}.net_weight"
+                                            class="form-control form-control-sm">
+                                        <small class="text-danger" style="min-height:18px;display:block;">
+                                            @error("products.$index.net_weight") {{ $message }} @enderror
+                                        </small>
+                                    </div>
+                                    @endif
+                                </td>
+                                @endif
+
+                                {{-- Price --}}
+                                <td class="align-middle">
+                                    <div style="min-width:120px;">
+                                        <input type="text"
+                                            wire:model.live.debounce.700ms="products.{{ $index }}.price"
+                                            class="form-control form-control-sm">
+                                        <small class="text-danger" style="min-height:18px;display:block;">
+                                            @error("products.$index.price") {{ $message }} @enderror
+                                        </small>
+                                    </div>
+                                </td>
+
+                                {{-- Total --}}
+                                <td class="align-middle">
+                                    {{ number_format($products[$index]['total'], 2) }}
+                                </td>
+
+                                {{-- Action --}}
+                                <td class="align-middle">
+                                    <button type="button"
+                                        class="btn btn-sm btn-danger"
+                                        wire:click="removeProduct({{ $index }})">
+                                        @lang('Remove')
+                                    </button>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
                 <div class="row mt-3">
                     {{-- Row 1: Vehicle & Driver Details (2 columns per row) 
                 <div class="col-md-6 col-sm-6">
@@ -388,13 +431,8 @@
                     {{-- Row 2: Left = Amount Fields | Right = Note --}}
 
 
-                    <div class="col-md-7 col-sm-6">
-                        <div class="form-group">
-                            <label>@lang('Note')</label>
-                            <textarea class="form-control" wire:model.defer="note" rows="7"></textarea>
-                        </div>
-                    </div>
-                    <div class="col-md-5 col-sm-6">
+
+                    <div class="col-md-12 col-sm-12">
                         <div class="form-group">
                             <label>@lang('Total Price') ( {{number_format($total_price,2)}} )</label>
                             <div class="input-group">

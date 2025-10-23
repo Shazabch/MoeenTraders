@@ -185,7 +185,7 @@ class AllSales extends Component
         $lastInvoiceNo = $lastSale->invoice_no ?? 0;
         $this->invoice_no = generateInvoiceNumber($lastInvoiceNo);
         $this->getCategories();
-        $this->getProductsSearchable();
+        $this->getProducts();
     }
     public function editSale($id)
     {
@@ -211,7 +211,7 @@ class AllSales extends Component
                 'text' => $warehouse->name,
             ];
         })->toArray();
-        $this->getProductsSearchable();
+        $this->getProducts();
     }
     public function loadSale($id)
     {
@@ -257,43 +257,46 @@ class AllSales extends Component
         $this->getTotalPrice();
     }
     public function getProducts()
-
     {
-        $warehouse = $this->warehouse_id;
-        if (!$warehouse) {
-            $this->searchResults = [];
-            $this->dispatch('notify', status: 'error', message: 'Select Whereouse First');
+        $query = Product::query()
+            ->with(['productStock', 'unit']);
+
+        // ✅ Optional category filter
+        if (!empty($this->selectedCategory)) {
+            $query->where('category_id', $this->selectedCategory);
         }
-        $products  = Product::query()->whereHas('productStock', function ($q) use ($warehouse) {
-            $q->where('warehouse_id', $warehouse)->where('quantity', '>', 0);
-        });
 
-        $products = $products->with('productStock')->where(function ($query) {
-            $query->searchable(['name', 'sku']);
-        });
+    
+        // ✅ Optional name search
+        if (!empty($this->searchQuery)) {
+            $search = $this->searchQuery;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            });
+        }
 
-        $this->searchResults = $products->with('unit')->get();
+        // ✅ Fetch results
+        $this->searchResults = $query->get();
     }
-   
+
     public function getCategories()
     {
 
-       
+
         $this->allcategories = Category::query()
             ->get()->map(function ($category) {
                 return [
                     'id' => $category->id,
-                    'name' => $category->name,
+                    'text' => $category->name,
                 ];
             });
     }
     public function updatedSelectedCategory($value)
     {
 
-        $this->getProductsSearchable();
+        $this->getProducts();
     }
-     public function getProductsSearchable()
-
+    public function getProductsSearchable()
     {
         $this->searchAbleProducts = [];
         $categoryId = $this->selectedCategory;
@@ -301,19 +304,14 @@ class AllSales extends Component
 
         if (!$warehouse) {
             $this->searchAbleProducts = [];
-            $this->dispatch('notify', status: 'error', message: 'Select Whereouse First');
-        } else {
-
-            $this->searchAbleProducts = Product::query()->where('category_id', $categoryId)->get()->map(function ($product) {
-                return [
-                    'id' => $product->id,
-                    'text' => $product->name . ' (' . $product->category?->name . ')',
-                ];
-            });
+            $this->dispatch('notify', status: 'error', message: 'Select Warehouse First');
+            return;
         }
-        
+
+        $this->searchAbleProducts = Product::query()
+            ->where('category_id', $categoryId)
+            ->get(['id', 'name']);
     }
-   
 
     public function updated($name, $value)
     {
@@ -332,7 +330,7 @@ class AllSales extends Component
         }
         if ($name === 'warehouse_id') {
 
-            $this->getProductsSearchable();
+            $this->getProducts();
         }
 
         if ($name === 'selected_product_id') {
@@ -428,10 +426,6 @@ class AllSales extends Component
             'stock_weight' => $stock ? $stock->net_weight : 0,
             'total' => $product->price ?? 0,
         ];
-
-        $this->searchQuery = '';
-        $this->searchResults = [];
-        $this->searchAbleProducts = [];
     }
 
 
