@@ -431,6 +431,7 @@ Route::middleware(['admin', 'admin.permission'])->group(function () {
 
     Route::delete('admin/customers/{id}', [CustomerController::class, 'destroy'])->name('customer.destroy');
     Route::get('/customers-pdf', [PdfController::class, 'customersPdf'])->name('customers.pdf');
+     Route::post('customer/advance', 'CustomerController@storeAdvance')->name('customer.advance.store');
 
 
 
