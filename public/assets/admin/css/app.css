@@ -4998,7 +4998,6 @@ th.w-85 {
 .res-sidebar-open-btn {
   width: 35px;
   padding: 0;
-  color: #fff;
   font-size: 20px;
   background-color: transparent;
   display: none;
@@ -5013,7 +5012,7 @@ th.w-85 {
 .sidebar .res-sidebar-close-btn {
   position: absolute;
   top: 0;
-  right: -35px;
+  right: 0;
   width: 35px;
   height: 35px;
   background-color: #ff8f3c;

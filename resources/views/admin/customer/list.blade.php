@@ -43,13 +43,7 @@
                                             data-modal_title="@lang('Edit Customer')" data-resource="{{ $customer }}">
                                             <i class="la la-pencil"></i>@lang('Edit')
                                         </button>
-                                        @permit('admin.customer.advance.store')
-                                        <button type="button" class="btn btn-sm btn-outline--success advanceModalBtn"
-                                            data-customer_id="{{ $customer->id }}"
-                                            data-customer_name="{{ $customer->name }}">
-                                            <i class="las la-hand-holding-usd"></i>@lang('Advance')
-                                        </button>
-                                        @endpermit
+
                                         <form id="delete-form-{{ $customer->id }}" action="{{ route('admin.customer.destroy', $customer->id) }}" method="POST" style="display: none;">
                                             @csrf
                                             @method('DELETE')

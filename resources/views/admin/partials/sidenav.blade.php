@@ -4,8 +4,9 @@
 
 
 <div class="sidebar bg--dark">
-    <button class="res-sidebar-close-btn"><i class="las la-times"></i></button>
+
     <div class="sidebar__inner">
+        <button class="res-sidebar-close-btn"><i class="las la-times"></i></button>
         <div class="sidebar__logo">
             <a  class="sidebar__main-logo" href="{{ route('admin.dashboard') }}"><img src="{{ siteLogo('light') }}" alt="image"></a>
         </div>
