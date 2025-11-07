@@ -35,7 +35,7 @@ class VehicleAssignmentController extends Controller
     public function create($batchId)
     {
         $pageTitle = 'Assign Vehicle';
-        $batch = DeliveryBatch::with(['batchOrders.sale.saleDetails.product', 'batchOrders.sale.customer', 'area'])
+        $batch = DeliveryBatch::with(['batchOrders.sale.saleDetails.product.category', 'batchOrders.sale.customer', 'area'])
             ->findOrFail($batchId);
 
         // Check if already assigned

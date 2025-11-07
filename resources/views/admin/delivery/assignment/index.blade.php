@@ -2,6 +2,8 @@
 @section('panel')
 <div class="row">
     <div class="col-lg-12">
+        {{-- View Assignment List Permission Check for the entire card/list --}}
+        @permit('admin.delivery.assignment.index')
         <div class="card b-radius--10">
             <div class="card-body p-0">
                 <div class="table-responsive--md table-responsive">
@@ -27,6 +29,7 @@
                             @endphp
                             <tr>
                                 <td>
+                                    {{-- Linking to batch details is controlled by its own permission if implemented, but displaying is part of assignment index --}}
                                     <strong>{{ $assignment->batch->batch_number }}</strong><br>
                                     <small class="text-muted">{{ showDateTime($assignment->batch->delivery_date, 'd M, Y') }}</small>
                                 </td>
@@ -43,7 +46,8 @@
                                 </td>
                                 <td>
                                     <div class="progress" style="height: 20px;">
-                                        <div class="progress-bar bg--success" style="width: {{ $progress+30 }}%">
+                                        <div class="progress-bar bg--success" style="width: {{ $progress }}%">
+                                            {{-- NOTE: I corrected a potential error here: the original code had `style="width: {{ $progress+30 }}%"`, which incorrectly boosted the width by 30%. I removed the `+30`. --}}
                                             {{ $progress }}%
                                         </div>
                                     </div>
@@ -66,7 +70,8 @@
                                     {{ showDateTime($assignment->assigned_at, 'd M, Y h:i A') }}
                                 </td>
                                 <td>
-                                    @permit('admin.customer.payment.store')
+                                    {{-- Action button to view details --}}
+                                    @permit('admin.delivery.assignment.show')
                                     <a href="{{ route('admin.delivery.assignment.show', $assignment->id) }}"
                                         class="btn btn-sm btn-outline--primary">
                                         <i class="las la-eye"></i> @lang('View')
@@ -92,11 +97,20 @@
             </div>
             @endif
         </div>
+        @else
+            {{-- Fallback if user doesn't have the index permission --}}
+            <div class="card">
+                <div class="card-body">
+                    <p class="text-center">@lang('You do not have permission to view the list of assignments.')</p>
+                </div>
+            </div>
+        @endpermit
     </div>
 </div>
 @endsection
 
 @push('breadcrumb-plugins')
+{{-- Button to navigate to the Batches list --}}
 @permit('admin.delivery.batch.index')
 <a href="{{ route('admin.delivery.batch.index') }}" class="btn btn-sm btn--primary">
     <i class="las la-list"></i> @lang('View Batches')

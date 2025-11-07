@@ -1,8 +1,9 @@
 @extends('admin.layouts.app')
 @section('panel')
 <div class="row">
-    <!-- Assignment Header -->
     <div class="col-lg-12 mb-30">
+        {{-- View Assignment Permission Check for the entire header block --}}
+        @permit('admin.delivery.assignment.show')
         <div class="card">
             <div class="card-header bg--primary">
                 <div class="d-flex justify-content-between align-items-center">
@@ -33,7 +34,12 @@
                     <div class="col-md-3">
                         <div class="info-box">
                             <label>@lang('Batch')</label>
+                            {{-- Linking to the batch view requires batch.show permission --}}
+                            @permit('admin.delivery.batch.show')
+                            <h6><a href="{{ route('admin.delivery.batch.show', $assignment->batch_id) }}">{{ $assignment->batch->batch_number }}</a></h6>
+                            @else
                             <h6>{{ $assignment->batch->batch_number }}</h6>
+                            @endpermit
                             <small class="text-muted">{{ $assignment->batch->total_orders }} orders</small>
                         </div>
                     </div>
@@ -44,7 +50,7 @@
                             <small class="text-muted">{{ showDateTime($assignment->assigned_at, 'd M, Y h:i A') }}</small>
                         </div>
                     </div>
-                     <div class="col-md-3">
+                    <div class="col-md-3">
                         <div class="info-box">
                             <label>@lang('Assigned To')</label>
                             <h6>{{ $assignment->assignedTo->name ?? 'N/A' }}</h6>
@@ -54,11 +60,13 @@
                 </div>
             </div>
         </div>
+        @endpermit
     </div>
 
-    <!-- Left Column -->
     <div class="col-lg-8">
-        <!-- Containers & Items -->
+
+        {{-- Viewing assignment implies viewing its containers/items --}}
+        @permit('admin.delivery.assignment.show')
         <div class="card mb-30">
             <div class="card-header">
                 <h5 class="card-title">
@@ -100,16 +108,24 @@
                                         </span>
                                     </td>
                                     <td>
-                                        @if($item->sale)
-                                            <a href="{{ route('admin.order.edit', $item->sale_id) }}" target="_blank">
-                                                #{{ $item->sale->invoice_no }}
-                                            </a>
+                                        {{-- Linking to order edit page requires another permission --}}
+                                        @permit('admin.order.edit')
+                                            @if($item->sale)
+                                                <a href="{{ route('admin.order.edit', $item->sale_id) }}" target="_blank">
+                                                    #{{ $item->sale->invoice_no }}
+                                                </a>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
                                         @else
-                                            <span class="text-muted">-</span>
-                                        @endif
+                                            @if($item->sale)
+                                                #{{ $item->sale->invoice_no }}
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        @endpermit
                                     </td>
                                     <td>
-                                        <!-- <strong>{{ $item->product->name ?? 'N/A' }}</strong> -->
                                         @if($item->product)
                                         <br><small class="text-muted">{{ getProductTitle($item->product->id) }}</small>
                                         @endif
@@ -143,8 +159,10 @@
                 @endforelse
             </div>
         </div>
+        @endpermit
 
-        <!-- Orders in Batch -->
+        {{-- Displaying batch orders is closely related to batch viewing/management --}}
+        @permit('admin.delivery.batch.show')
         <div class="card mb-30">
             <div class="card-header">
                 <h5 class="card-title">
@@ -167,9 +185,14 @@
                             @foreach($assignment->batch->batchOrders as $batchOrder)
                             <tr>
                                 <td>
-                                    <a href="{{ route('admin.order.edit', $batchOrder->sale_id) }}" target="_blank">
+                                    {{-- Linking to order edit page requires another permission --}}
+                                    @permit('admin.order.edit')
+                                        <a href="{{ route('admin.order.edit', $batchOrder->sale_id) }}" target="_blank">
+                                            #{{ $batchOrder->sale->invoice_no }}
+                                        </a>
+                                    @else
                                         #{{ $batchOrder->sale->invoice_no }}
-                                    </a>
+                                    @endpermit
                                 </td>
                                 <td>
                                     <strong>{{ $batchOrder->sale->customer->name }}</strong>
@@ -197,11 +220,12 @@
                 </div>
             </div>
         </div>
+        @endpermit
     </div>
 
-    <!-- Right Column -->
     <div class="col-lg-4">
-        <!-- Delivery Timeline -->
+
+        @permit('admin.delivery.assignment.show')
         <div class="card mb-30">
             <div class="card-header">
                 <h5 class="card-title">
@@ -210,6 +234,7 @@
             </div>
             <div class="card-body">
                 <div class="timeline">
+                    {{-- Assigned --}}
                     <div class="timeline-item {{ $assignment->assigned_at ? 'completed' : '' }}">
                         <div class="timeline-icon bg--primary">
                             <i class="las la-check"></i>
@@ -222,6 +247,7 @@
                         </div>
                     </div>
 
+                    {{-- Started --}}
                     <div class="timeline-item {{ $assignment->started_at ? 'completed' : '' }}">
                         <div class="timeline-icon {{ $assignment->started_at ? 'bg--warning' : 'bg--light' }}">
                             <i class="las la-truck"></i>
@@ -234,6 +260,7 @@
                         </div>
                     </div>
 
+                    {{-- Completed --}}
                     <div class="timeline-item {{ $assignment->completed_at ? 'completed' : '' }}">
                         <div class="timeline-icon {{ $assignment->completed_at ? 'bg--success' : 'bg--light' }}">
                             <i class="las la-flag-checkered"></i>
@@ -248,8 +275,9 @@
                 </div>
             </div>
         </div>
+        @endpermit
 
-        <!-- Odometer Info -->
+        @permit('admin.delivery.assignment.show')
         <div class="card mb-30">
             <div class="card-header">
                 <h5 class="card-title">
@@ -275,8 +303,9 @@
                 </div>
             </div>
         </div>
+        @endpermit
 
-        <!-- Summary -->
+        @permit('admin.delivery.assignment.show')
         <div class="card mb-30">
             <div class="card-header">
                 <h5 class="card-title">
@@ -308,8 +337,8 @@
                 </div>
             </div>
         </div>
+        @endpermit
 
-        <!-- Actions -->
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title">
@@ -318,31 +347,48 @@
             </div>
             <div class="card-body">
                 @if($assignment->status == 'assigned')
+                    {{-- Start Delivery Button and Modal --}}
+                    @permit('admin.delivery.assignment.start')
                     <button class="btn btn--success w-100 mb-2" data-bs-toggle="modal" data-bs-target="#startModal">
                         <i class="las la-play"></i> @lang('Start Delivery')
                     </button>
-                    <!-- <a href="{{ route('admin.delivery.assignment.edit', $assignment->id) }}" class="btn btn--primary w-100 mb-2">
-                        <i class="las la-edit"></i> @lang('Edit Assignment')
-                    </a> -->
+                    @endpermit
+
+                    {{-- Delete Assignment Button --}}
+                    @permit('admin.delivery.assignment.destroy')
                     <button class="btn btn--danger w-100" onclick="confirmDelete()">
                         <i class="las la-trash"></i> @lang('Delete Assignment')
                     </button>
+                    @endpermit
+
                 @elseif($assignment->status == 'in_progress')
+                    {{-- Complete Delivery Button and Modal --}}
+                    @permit('admin.delivery.assignment.complete')
                     <button class="btn btn--success w-100 mb-2" data-bs-toggle="modal" data-bs-target="#completeModal">
                         <i class="las la-check-circle"></i> @lang('Complete Delivery')
                     </button>
+                    @endpermit
+
+                    {{-- View All Assignments Link --}}
+                    @permit('admin.delivery.assignment.index')
                     <a href="{{ route('admin.delivery.assignment.index') }}" class="btn btn--info w-100">
                         <i class="las la-list"></i> @lang('View All Assignments')
                     </a>
+                    @endpermit
+
                 @else
+                    {{-- View All Assignments Link for completed/failed status --}}
+                    @permit('admin.delivery.assignment.index')
                     <a href="{{ route('admin.delivery.assignment.index') }}" class="btn btn--dark w-100">
                         <i class="las la-list"></i> @lang('View All Assignments')
                     </a>
+                    @endpermit
                 @endif
             </div>
         </div>
 
         @if($assignment->notes)
+        @permit('admin.delivery.assignment.show')
         <div class="card mt-30">
             <div class="card-header">
                 <h5 class="card-title">
@@ -353,11 +399,12 @@
                 <p class="mb-0">{{ $assignment->notes }}</p>
             </div>
         </div>
+        @endpermit
         @endif
     </div>
 </div>
 
-<!-- Start Delivery Modal -->
+@permit('admin.delivery.assignment.start')
 <div class="modal fade" id="startModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -384,8 +431,9 @@
         </div>
     </div>
 </div>
+@endpermit
 
-<!-- Complete Delivery Modal -->
+@permit('admin.delivery.assignment.complete')
 <div class="modal fade" id="completeModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -415,16 +463,21 @@
         </div>
     </div>
 </div>
+@endpermit
 
-<!-- Delete Form -->
+@permit('admin.delivery.assignment.destroy')
 <form id="deleteForm" action="{{ route('admin.delivery.assignment.destroy', $assignment->id) }}" method="POST" style="display: none;">
     @csrf
     @method('DELETE')
 </form>
+@endpermit
 @endsection
 
 @push('breadcrumb-plugins')
+{{-- The Back button is essentially part of viewing the assignment/batch --}}
+@permit('admin.delivery.batch.show')
 <x-back route="{{ route('admin.delivery.batch.show', $assignment->batch_id) }}" />
+@endpermit
 @endpush
 
 @push('style')
@@ -546,10 +599,17 @@
 
 @push('script')
 <script>
+    @permit('admin.delivery.assignment.destroy')
     function confirmDelete() {
         if (confirm('Are you sure you want to delete this assignment? This action cannot be undone.')) {
             document.getElementById('deleteForm').submit();
         }
     }
+    @else
+    // Provide a fallback or prevent function if permission is denied
+    function confirmDelete() {
+        alert('You do not have permission to delete this assignment.');
+    }
+    @endpermit
 </script>
 @endpush

@@ -359,7 +359,7 @@ Route::middleware(['admin', 'admin.permission'])->group(function () {
     // And the reports route
     Route::get('/delivery/reports', [DeliveryDashboardController::class, 'reports'])
         ->name('delivery.reports');
-
+    Route::post('delivery/assignment/{assignment_id}/order-status', [DeliveryDashboardController::class, 'updateBatchOrderStatus'])->name('delivery.batch.order.update_status');
     // Update existing order routes to set delivery_status
     Route::post('/order/update-delivery-status', function (Request $request) {
         $request->validate([

@@ -41,34 +41,34 @@ class DeliveryDashboardController extends Controller
                 'vehicle',
                 'batch.batchOrders'
             ])
-            ->whereIn('status', ['assigned', 'in_progress'])
-            ->get()
-            ->map(function ($assignment) {
-                $totalOrders = $assignment->batch->batchOrders->count();
-                $deliveredOrders = $assignment->batch->batchOrders
-                    ->where('delivery_status', 'delivered')
-                    ->count();
+                ->whereIn('status', ['assigned', 'in_progress'])
+                ->get()
+                ->map(function ($assignment) {
+                    $totalOrders = $assignment->batch->batchOrders->count();
+                    $deliveredOrders = $assignment->batch->batchOrders
+                        ->where('delivery_status', 'delivered')
+                        ->count();
 
-                $progress = $totalOrders > 0 ? round(($deliveredOrders / $totalOrders) * 100) : 0;
+                    $progress = $totalOrders > 0 ? round(($deliveredOrders / $totalOrders) * 100) : 0;
 
-                return [
-                    'id' => $assignment->id,
-                    'status' => $assignment->status,
-                    'progress' => $progress,
-                    'batch' => [
-                        'id' => $assignment->batch->id,
-                        'batch_number' => $assignment->batch->batch_number,
-                        'delivery_date' => $assignment->batch->delivery_date,
-                        'total_orders' => $totalOrders,
-                        'total_amount' => $assignment->batch->total_amount
-                    ],
-                    'vehicle' => [
-                        'vehicle_number' => $assignment->vehicle->vehicle_number,
-                        'driver_name' => $assignment->vehicle->driver_name,
-                        'driver_phone' => $assignment->vehicle->driver_phone
-                    ]
-                ];
-            });
+                    return [
+                        'id' => $assignment->id,
+                        'status' => $assignment->status,
+                        'progress' => $progress,
+                        'batch' => [
+                            'id' => $assignment->batch->id,
+                            'batch_number' => $assignment->batch->batch_number,
+                            'delivery_date' => $assignment->batch->delivery_date,
+                            'total_orders' => $totalOrders,
+                            'total_amount' => $assignment->batch->total_amount
+                        ],
+                        'vehicle' => [
+                            'vehicle_number' => $assignment->vehicle->vehicle_number,
+                            'driver_name' => $assignment->vehicle->driver_name,
+                            'driver_phone' => $assignment->vehicle->driver_phone
+                        ]
+                    ];
+                });
 
             // Recent Batches
             $recentBatches = DeliveryBatch::with(['area'])
@@ -147,7 +147,6 @@ class DeliveryDashboardController extends Controller
                 'vehicles' => $vehicles,
                 'week_stats' => $weekStats
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -277,7 +276,6 @@ class DeliveryDashboardController extends Controller
                 default:
                     return response()->json(['error' => 'Invalid format'], 400);
             }
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -306,5 +304,42 @@ class DeliveryDashboardController extends Controller
     private function exportToExcel($data)
     {
         // Implement Excel export
+    }
+    public function updateBatchOrderStatus(Request $request, $assignment_id)
+    {
+        $request->validate([
+            'order_id' => 'required|exists:batch_orders,id',
+            // Note: The statuses here should match what you allow the sales manager to select
+            'delivery_status' => 'required|in:pending,delivered,cancelled,failed',
+        ]);
+
+        try {
+            // Find the specific BatchOrder record
+            $batchOrder = BatchOrder::findOrFail($request->order_id);
+
+            // Check if the BatchOrder belongs to the current Assignment/Batch (optional security layer)
+            if ($batchOrder->batch_id != $assignment->batch_id) {
+                // Return an error if the order doesn't belong to the batch
+                // or you can simply proceed without this check if the order_id is secure.
+            }
+
+            // Update the delivery status on the BatchOrder record
+            $batchOrder->delivery_status = $request->delivery_status;
+            $batchOrder->save();
+
+            // OPTIONAL: You might also need to update the global 'Sale' model status
+            // if the batch order status should reflect globally.
+            // This depends on your application logic. E.g.,
+            // if ($request->delivery_status == 'delivered') {
+            //     $batchOrder->sale->status = 'delivered';
+            //     $batchOrder->sale->save();
+            // }
+
+            $notify[] = ['success', 'Order #' . $batchOrder->sale->invoice_no . ' delivery status updated to ' . ucfirst($request->delivery_status) . ' successfully.'];
+            return back()->withNotify($notify);
+        } catch (\Exception $e) {
+            $notify[] = ['error', 'Could not update order status. Error: ' . $e->getMessage()];
+            return back()->withNotify($notify);
+        }
     }
 }

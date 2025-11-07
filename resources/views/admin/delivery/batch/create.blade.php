@@ -251,7 +251,7 @@
 @push('style')
 <style>
     .orders-list {
-        max-height: calc(100vh - 400px);
+        max-height: calc(120vh - 400px);
         overflow-y: auto;
     }
 

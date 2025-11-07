@@ -1,7 +1,6 @@
 @extends('admin.layouts.app')
 @section('panel')
 <div class="row" id="assignmentApp">
-    <!-- Left Side: Batch Info -->
     <div class="col-lg-4 mb-30">
         <div class="card">
             <div class="card-header bg--primary">
@@ -35,7 +34,6 @@
 
                 <hr>
 
-                <!-- Orders List -->
                 <h6 class="mb-3">@lang('Orders in Batch')</h6>
                 <div class="batch-orders-list">
                     <div v-for="(order, index) in batchOrders" :key="order.id" class="mini-order-card">
@@ -53,7 +51,6 @@
         </div>
     </div>
 
-    <!-- Right Side: Vehicle Assignment -->
     <div class="col-lg-8 mb-30">
         <div class="card">
             <div class="card-header">
@@ -63,7 +60,6 @@
                 <form @submit.prevent="submitAssignment">
                     @csrf
 
-                    <!-- Vehicle Selection -->
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -76,7 +72,7 @@
                                 </select>
                             </div>
                         </div>
-                         <div class="col-md-6">
+                       <div class="col-md-6">
                             <div class="form-group">
                                 <label>@lang('Select Sales Man') <span class="text--danger">*</span></label>
                                 <select class="form-control" v-model="assignmentData.assigned_to" required>
@@ -101,15 +97,15 @@
                         </div>
                     </div>
 
-                    <!-- Containers Section -->
                     <div class="containers-section">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h6 class="mb-0">@lang('Vehicle Containers')</h6>
                             <button
                                 type="button"
                                 class="btn btn-sm btn--primary"
-                                @click="addContainer">
-                                <i class="las la-plus"></i> @lang('Add Container')
+                                @click="addContainer"
+                                v-if="!hasExtraStockContainer()">
+                                <i class="las la-plus"></i> @lang('Add Empty Container')
                             </button>
                         </div>
 
@@ -117,7 +113,7 @@
                             <div
                                 v-for="(container, cIndex) in assignmentData.containers"
                                 :key="cIndex"
-                                class="container-card">
+                                :class="{'container-card': true, 'border--warning': container.name === extraStockContainerName}">
 
                                 <div class="container-header">
                                     <input
@@ -125,25 +121,26 @@
                                         class="form-control form-control-lg"
                                         v-model="container.name"
                                         :placeholder="'Container ' + (cIndex + 1)"
+                                        :disabled="container.name === extraStockContainerName || container.items.some(item => item.type === 'order')"
                                         required>
                                     <button
                                         type="button"
                                         class="btn btn-sm btn-outline--danger"
                                         @click="removeContainer(cIndex)"
-                                        v-if="assignmentData.containers.length > 1">
+                                        v-if="container.name !== extraStockContainerName && !container.items.some(item => item.type === 'order')">
                                         <i class="las la-trash"></i>
                                     </button>
                                 </div>
 
-                                <!-- Container Items -->
                                 <div class="container-items">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <small class="text-muted">@lang('Items in this container')</small>
                                         <button
                                             type="button"
                                             class="btn btn-xs btn-outline--primary"
-                                            @click="addItem(cIndex)">
-                                            <i class="las la-plus"></i> @lang('Add Item')
+                                            @click="addItem(cIndex)"
+                                            v-if="container.name === extraStockContainerName">
+                                            <i class="las la-plus"></i> @lang('Add Extra Stock Item')
                                         </button>
                                     </div>
 
@@ -152,25 +149,18 @@
                                         :key="iIndex"
                                         class="item-row">
 
-                                        <div class="row g-2">
-                                            <div class="col-md-6">
-                                                <select class="form-control form-control-sm" v-model="item.type" required>
-                                                    <option value="order">@lang('Order Item')</option>
-                                                    <option value="extra">@lang('Extra Stock')</option>
-                                                </select>
+                                        <div class="row g-2 align-items-center">
+                                            <div class="col-md-4">
+                                                <input
+                                                    type="text"
+                                                    class="form-control form-control-sm"
+                                                    :value="item.type === 'order' ? 'Order Item' : 'Extra Stock'"
+                                                    disabled>
+                                                <input type="hidden" :name="'containers['+cIndex+'][items]['+iIndex+'][type]'" :value="item.type">
                                             </div>
 
-                                            <div class="col-md-6" v-if="item.type === 'order'">
-                                                <select class="form-control form-control-sm" v-model="item.sale_id">
-                                                    <option value="">@lang('Select Order')</option>
-                                                    <option v-for="order in batchOrders" :key="order.id" :value="order.sale_id">
-                                                        #@{{ order.sale.invoice_no }}
-                                                    </option>
-                                                </select>
-                                            </div>
-
-                                            <div :class="item.type === 'order' ? 'col-md-6' : 'col-md-6'">
-                                                <select class="form-control form-control-sm" v-model="item.product_id" required>
+                                            <div class="col-md-4">
+                                                <select class="form-control form-control-sm" v-model="item.product_id" :disabled="item.type === 'order'" required>
                                                     <option value="">@lang('Select Product')</option>
                                                     <option v-for="product in availableProducts" :key="product.id" :value="product.id">
                                                         @{{ product.name }}
@@ -178,17 +168,18 @@
                                                 </select>
                                             </div>
 
-                                            <div class="col-md-6">
+                                            <div :class="item.type === 'order' ? 'col-md-4' : 'col-md-3'">
                                                 <input
                                                     type="number"
                                                     class="form-control form-control-sm"
                                                     v-model.number="item.quantity"
                                                     placeholder="Qty"
                                                     min="1"
+                                                    :disabled="item.type === 'order'"
                                                     required>
                                             </div>
 
-                                            <div class="col-md-1">
+                                            <div class="col-md-1" v-if="item.type === 'extra'">
                                                 <button
                                                     type="button"
                                                     class="btn btn-sm btn-outline--danger w-100"
@@ -196,6 +187,8 @@
                                                     <i class="las la-times"></i>
                                                 </button>
                                             </div>
+
+                                            <input type="hidden" v-if="item.type === 'order'" :name="'containers['+cIndex+'][items]['+iIndex+'][sale_id]'" :value="item.sale_id">
                                         </div>
 
                                         <div class="row mt-2" v-if="getProductDetails(item.product_id)">
@@ -204,6 +197,7 @@
                                                     <small class="text-muted">
                                                         <strong>@{{ getProductDetails(item.product_id).name }}</strong>
                                                         <span v-if="item.type === 'extra'" class="badge badge--warning ms-2">Extra Stock</span>
+                                                        <span v-if="item.type === 'order'" class="badge badge--success ms-2">Order #@{{ item.sale_invoice_no }}</span>
                                                     </small>
                                                 </div>
                                             </div>
@@ -215,7 +209,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Container Notes -->
                                 <div class="mt-2">
                                     <input
                                         type="text"
@@ -227,23 +220,14 @@
 
                             <div v-if="assignmentData.containers.length === 0" class="text-center py-5">
                                 <i class="las la-box-open la-3x text-muted"></i>
-                                <p class="mt-2 text-muted">@lang('No containers added yet')</p>
+                                <p class="mt-2 text-muted">@lang('All orders must be auto-loaded.')</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Quick Load Options -->
                     <div class="quick-load-section mt-4">
-                        <h6 class="mb-3">@lang('Quick Load Options')</h6>
-                        <div class="row">
-                            <div class="col-md-6 mb-2">
-                                <button
-                                    type="button"
-                                    class="btn btn-outline--success w-100"
-                                    @click="autoLoadFromOrders">
-                                    <i class="las la-magic"></i> @lang('Auto-Load from Orders')
-                                </button>
-                            </div>
+                        <h6 class="mb-3">@lang('Loading Actions')</h6>
+                        <div class="row justify-content-center">
                             <div class="col-md-6 mb-2">
                                 <button
                                     type="button"
@@ -255,7 +239,6 @@
                         </div>
                     </div>
 
-                    <!-- Assignment Notes -->
                     <div class="form-group mt-4">
                         <label>@lang('Assignment Notes')</label>
                         <textarea
@@ -265,7 +248,6 @@
                             placeholder="@lang('Add any special instructions for the driver...')"></textarea>
                     </div>
 
-                    <!-- Summary -->
                     <div class="assignment-summary mt-4">
                         <div class="row">
                             <div class="col-md-4">
@@ -289,7 +271,6 @@
                         </div>
                     </div>
 
-                    <!-- Submit Button -->
                     <button
                         type="submit"
                         class="btn btn--primary w-100 h-45 mt-4"
@@ -305,10 +286,7 @@
             </div>
         </div>
     </div>
-</div>
-
-<!-- Loading Summary Modal -->
-<div class="modal fade" id="summaryModal" tabindex="-1">
+    <div class="modal fade" id="summaryModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -328,7 +306,7 @@
                         </thead>
                         <tbody>
                             <tr v-for="item in loadingSummary" :key="item.product_id">
-                                <td>@{{ item.product_name }}</td>
+                                <td>@{{ getProductDetails(item.product_id).name }}</td>
                                 <td><strong>@{{ item.total_qty }}</strong></td>
                                 <td>@{{ item.order_qty }}</td>
                                 <td>@{{ item.extra_qty }}</td>
@@ -343,6 +321,9 @@
         </div>
     </div>
 </div>
+</div>
+
+
 @endsection
 
 @push('breadcrumb-plugins')
@@ -351,6 +332,7 @@
 
 @push('style')
 <style>
+    /* ... (CSS remains the same) ... */
     .batch-info {
         background: #f8f9fa;
         padding: 15px;
@@ -405,6 +387,10 @@
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 15px;
+    }
+
+    .container-card.border--warning {
+        border-color: var(--warning);
     }
 
     .container-header {
@@ -482,33 +468,31 @@
     createApp({
         data() {
             return {
+                // Ensure your $batch->batchOrders data includes product->category and product->brand
+                // nested relationships for this to work correctly.
                 batchOrders: @json($batch->batchOrders),
                 vehicles: @json($vehicles),
                 salesmans: @json($salesmans),
-                allProducts: [],
+                extraStockContainerName: 'Extra Stock / Returns',
                 assignmentData: {
                     batch_id: {{ $batch->id }},
                     vehicle_id: '',
                     assigned_to: '',
                     starting_km: '',
-                    containers: [
-                        {
-                            name: 'Front Container',
-                            items: [],
-                            notes: ''
-                        }
-                    ],
+                    containers: [],
                     notes: ''
                 },
                 isSubmitting: false
             }
         },
+
         computed: {
             availableProducts() {
                 const products = new Map();
                 this.batchOrders.forEach(order => {
                     order.sale.sale_details.forEach(detail => {
                         if (!products.has(detail.product.id)) {
+                            // Store the full product object including category and brand
                             products.set(detail.product.id, detail.product);
                         }
                     });
@@ -531,6 +515,7 @@
             },
             canSubmit() {
                 return this.assignmentData.vehicle_id &&
+                       this.assignmentData.assigned_to &&
                        this.assignmentData.containers.length > 0 &&
                        this.totalItems > 0;
             },
@@ -543,10 +528,8 @@
 
                         const key = item.product_id;
                         if (!summary.has(key)) {
-                            const product = this.getProductDetails(item.product_id);
                             summary.set(key, {
                                 product_id: item.product_id,
-                                product_name: product ? product.name : 'Unknown',
                                 total_qty: 0,
                                 order_qty: 0,
                                 extra_qty: 0
@@ -569,6 +552,40 @@
             }
         },
         methods: {
+            /**
+             * Formats the product details to match the PHP helper's output.
+             * @param {number} productId
+             * @returns {object} The product object with a formatted 'name' property.
+             */
+            getProductDetails(productId) {
+                if (!productId) return null;
+                const product = this.availableProducts.find(p => p.id == productId);
+
+                if (!product) {
+                    return { name: 'Unknown Product' };
+                }
+
+                // Format the name to match the PHP helper: "{$product->name} ({$category})"
+                const categoryName = product.category ? product.category.name : 'No Category';
+
+                // Return the product object with the formatted name
+                return {
+                    ...product,
+                    name: `${product.name} (${categoryName})`
+                };
+            },
+            hasExtraStockContainer() {
+                return this.assignmentData.containers.some(c => c.name === this.extraStockContainerName);
+            },
+            createExtraStockContainer() {
+                 if (this.hasExtraStockContainer()) return;
+
+                 this.assignmentData.containers.push({
+                    name: this.extraStockContainerName,
+                    items: [],
+                    notes: 'Dedicated container for extra stock and returns.'
+                });
+            },
             addContainer() {
                 this.assignmentData.containers.push({
                     name: `Container ${this.assignmentData.containers.length + 1}`,
@@ -577,13 +594,29 @@
                 });
             },
             removeContainer(index) {
-                if (this.assignmentData.containers.length > 1) {
-                    this.assignmentData.containers.splice(index, 1);
+                const container = this.assignmentData.containers[index];
+
+                if (container.name === this.extraStockContainerName) {
+                    this.showNotification('error', 'The dedicated "Extra Stock / Returns" container cannot be removed.');
+                    return;
                 }
+
+                if (container.items.some(item => item.type === 'order') && !confirm('This container holds order items. Removing it will remove the orders from the loading list. Are you sure?')) {
+                    return;
+                }
+
+                this.assignmentData.containers.splice(index, 1);
             },
             addItem(containerIndex) {
-                this.assignmentData.containers[containerIndex].items.push({
-                    type: 'order',
+                const container = this.assignmentData.containers[containerIndex];
+
+                if (container.name !== this.extraStockContainerName) {
+                    this.showNotification('error', 'Extra stock can only be added to the "Extra Stock / Returns" container.');
+                    return;
+                }
+
+                container.items.push({
+                    type: 'extra',
                     sale_id: '',
                     product_id: '',
                     quantity: 1,
@@ -591,47 +624,44 @@
                 });
             },
             removeItem(containerIndex, itemIndex) {
-                this.assignmentData.containers[containerIndex].items.splice(itemIndex, 1);
-            },
-            getProductDetails(productId) {
-                if (!productId) return null;
-                return this.availableProducts.find(p => p.id == productId);
-            },
-            autoLoadFromOrders() {
-                if (!confirm('This will automatically load all order items into containers. Continue?')) {
+                const item = this.assignmentData.containers[containerIndex].items[itemIndex];
+
+                if (item.type === 'order') {
+                    this.showNotification('error', 'You cannot remove an "Order Item".');
                     return;
                 }
 
-                this.assignmentData.containers = [];
+                this.assignmentData.containers[containerIndex].items.splice(itemIndex, 1);
+            },
+            autoLoadFromOrders() {
+                // Remove all existing order-based containers to prevent duplicates on re-load
+                this.assignmentData.containers = this.assignmentData.containers.filter(c => c.name === this.extraStockContainerName);
 
-                const orderGroups = new Map();
+                // Start loading orders from the beginning of the list, right after the Extra Stock container
+                let startIndex = this.assignmentData.containers.length;
 
                 this.batchOrders.forEach(order => {
-                    const items = [];
+                    const orderItems = [];
                     order.sale.sale_details.forEach(detail => {
-                        items.push({
+                        orderItems.push({
                             type: 'order',
                             sale_id: order.sale_id,
+                            sale_invoice_no: order.sale.invoice_no,
                             product_id: detail.product.id,
                             quantity: detail.quantity,
                             notes: ''
                         });
                     });
 
-                    orderGroups.set(order.sale.invoice_no, items);
-                });
-
-                let containerIndex = 1;
-                orderGroups.forEach((items, invoiceNo) => {
-                    this.assignmentData.containers.push({
-                        name: `Order #${invoiceNo}`,
-                        items: items,
-                        notes: `Auto-loaded from order ${invoiceNo}`
+                    // Create one container per order
+                    this.assignmentData.containers.splice(startIndex++, 0, {
+                        name: `Order #${order.sale.invoice_no} (${order.sale.customer.name})`,
+                        items: orderItems,
+                        notes: `Auto-loaded from order ${order.sale.invoice_no}`
                     });
-                    containerIndex++;
                 });
 
-                this.showNotification('success', 'Orders auto-loaded successfully!');
+                this.showNotification('success', 'All batch orders have been automatically loaded.');
             },
             showLoadingSummary() {
                 const modal = new bootstrap.Modal(document.getElementById('summaryModal'));
@@ -643,14 +673,14 @@
             submitAssignment() {
                 if (!this.canSubmit) return;
 
-                const emptyContainers = this.assignmentData.containers.filter(c => c.items.length === 0);
-                if (emptyContainers.length > 0) {
-                    this.showNotification('error', 'All containers must have at least one item');
+                if (this.assignmentData.containers.length === 0) {
+                    this.showNotification('error', 'Please ensure all batch orders have been loaded.');
                     return;
                 }
 
                 this.isSubmitting = true;
 
+                // --- Build FormData to send to Laravel ---
                 const formData = new FormData();
                 formData.append('_token', '{{ csrf_token() }}');
                 formData.append('batch_id', this.assignmentData.batch_id);
@@ -665,10 +695,15 @@
 
                     container.items.forEach((item, iIndex) => {
                         formData.append(`containers[${cIndex}][items][${iIndex}][type]`, item.type);
-                        formData.append(`containers[${cIndex}][items][${iIndex}][sale_id]`, item.sale_id || '');
+
+                        if (item.type === 'order') {
+                            formData.append(`containers[${cIndex}][items][${iIndex}][sale_id]`, item.sale_id);
+                        } else {
+                            formData.append(`containers[${cIndex}][items][${iIndex}][sale_id]`, '');
+                        }
+
                         formData.append(`containers[${cIndex}][items][${iIndex}][product_id]`, item.product_id);
                         formData.append(`containers[${cIndex}][items][${iIndex}][quantity]`, item.quantity);
-                        formData.append(`containers[${cIndex}][items][${iIndex}][notes]`, item.notes || '');
                     });
                 });
 
@@ -684,7 +719,7 @@
                     if (data.success) {
                         this.showNotification('success', data.message);
                         setTimeout(() => {
-                            window.location.href = data.redirect;
+                            window.location.href = data.redirect || '{{ route("admin.delivery.assignment.index") }}';
                         }, 1000);
                     } else {
                         this.isSubmitting = false;
@@ -709,8 +744,11 @@
             }
         },
         mounted() {
-            console.log('Batch orders:', this.batchOrders);
-            console.log('Available products:', this.availableProducts);
+            // 1. Load Extra Stock Container first
+            this.createExtraStockContainer();
+
+            // 2. Load all batch orders (will be inserted after the extra stock container)
+            this.autoLoadFromOrders();
         }
     }).mount('#assignmentApp');
 </script>

@@ -1,8 +1,13 @@
 @extends('admin.layouts.app')
 @section('panel')
 <div class="row" id="dashboardApp">
-    <!-- Statistics Cards -->
+    {{-- Statistics Cards --}}
+
+    {{-- Using the main dashboard data permission for all general stats --}}
+    @permit('admin.delivery.dashboard.data')
+
     <div class="col-xl-3 col-lg-6 col-sm-6 mb-30">
+        {{-- Widget 1: Active Deliveries --}}
         <div class="dashboard-w1 bg--primary b-radius--10 box-shadow">
             <div class="icon">
                 <i class="las la-truck"></i>
@@ -19,6 +24,7 @@
     </div>
 
     <div class="col-xl-3 col-lg-6 col-sm-6 mb-30">
+        {{-- Widget 2: Delivered Today --}}
         <div class="dashboard-w1 bg--success b-radius--10 box-shadow">
             <div class="icon">
                 <i class="las la-check-circle"></i>
@@ -35,6 +41,7 @@
     </div>
 
     <div class="col-xl-3 col-lg-6 col-sm-6 mb-30">
+        {{-- Widget 3: Pending Orders --}}
         <div class="dashboard-w1 bg--warning b-radius--10 box-shadow">
             <div class="icon">
                 <i class="las la-clock"></i>
@@ -51,6 +58,7 @@
     </div>
 
     <div class="col-xl-3 col-lg-6 col-sm-6 mb-30">
+        {{-- Widget 4: Available Vehicles --}}
         <div class="dashboard-w1 bg--info b-radius--10 box-shadow">
             <div class="icon">
                 <i class="las la-car"></i>
@@ -66,14 +74,21 @@
         </div>
     </div>
 
-    <!-- Active Deliveries Map/List -->
+    @endpermit
+    {{-- End of Statistics Cards Permission Check --}}
+
+    {{-- Active Deliveries Map/List --}}
+    @permit('admin.delivery.assignment.index')
     <div class="col-lg-8 mb-30">
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title">@lang('Active Deliveries')</h5>
+                {{-- Refresh button uses the main data permission --}}
+                @permit('admin.delivery.dashboard.data')
                 <button class="btn btn-sm btn--primary" @click="refreshData">
                     <i class="las la-sync"></i> @lang('Refresh')
                 </button>
+                @endpermit
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -118,9 +133,12 @@
                                     </span>
                                 </td>
                                 <td>
+                                    {{-- The 'Track' action links to the assignment show page --}}
+                                    @permit('admin.delivery.assignment.show')
                                     <a :href="'/admin/delivery/assignment/' + delivery.id" class="btn btn-sm btn-outline--primary">
                                         <i class="las la-eye"></i> @lang('Track')
                                     </a>
+                                    @endpermit
                                 </td>
                             </tr>
                             <tr v-if="activeDeliveries.length === 0">
@@ -134,13 +152,17 @@
             </div>
         </div>
 
-        <!-- Recent Batches -->
+        {{-- Recent Batches --}}
+        @permit('admin.delivery.batch.index')
         <div class="card mt-30">
             <div class="card-header">
                 <h5 class="card-title">@lang('Recent Batches')</h5>
+                {{-- Create Batch Button --}}
+                @permit('admin.delivery.batch.create')
                 <a href="{{ route('admin.delivery.batch.create') }}" class="btn btn-sm btn--success">
                     <i class="las la-plus"></i> @lang('Create Batch')
                 </a>
+                @endpermit
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -172,9 +194,12 @@
                                     </span>
                                 </td>
                                 <td>
+                                    {{-- The 'Action' link points to the batch show page --}}
+                                    @permit('admin.delivery.batch.show')
                                     <a :href="'/admin/delivery/batch/' + batch.id" class="btn btn-sm btn-outline--primary">
                                         <i class="las la-eye"></i>
                                     </a>
+                                    @endpermit
                                 </td>
                             </tr>
                         </tbody>
@@ -182,11 +207,16 @@
                 </div>
             </div>
         </div>
+        @endpermit
     </div>
+    @endpermit
+    {{-- End of Active Deliveries / Recent Batches Permission Check --}}
 
-    <!-- Right Sidebar -->
+    {{-- Right Sidebar --}}
     <div class="col-lg-4 mb-30">
-        <!-- Ready Orders -->
+
+        {{-- Ready Orders Widget --}}
+        @permit('admin.delivery.batch.create') {{-- Tied to batch creation since it feeds into it --}}
         <div class="card mb-30">
             <div class="card-header bg--success">
                 <h5 class="card-title text-white">@lang('Ready for Delivery')</h5>
@@ -211,8 +241,10 @@
                 </a>
             </div>
         </div>
+        @endpermit
 
-        <!-- Vehicles Status -->
+        {{-- Vehicles Status Widget --}}
+        @permit('admin.vehicle.index')
         <div class="card mb-30">
             <div class="card-header bg--info">
                 <h5 class="card-title text-white">@lang('Vehicles Status')</h5>
@@ -236,8 +268,10 @@
                 </a>
             </div>
         </div>
+        @endpermit
 
-        <!-- Quick Stats -->
+        {{-- Quick Stats Widget (This Week Summary) --}}
+        @permit('admin.delivery.reports')
         <div class="card">
             <div class="card-header bg--dark">
                 <h5 class="card-title text-white">@lang('This Week Summary')</h5>
@@ -263,9 +297,11 @@
                 </div>
             </div>
         </div>
+        @endpermit
     </div>
 </div>
 @endsection
+
 
 @push('style')
 <style>
