@@ -6,9 +6,14 @@ use App\Constants\Status;
 use App\Http\Controllers\Controller;
 use App\Models\Action;
 use App\Models\Customer;
+use App\Models\CustomerTransaction;
+use App\Traits\DailyBookEntryTrait;
+use App\Traits\HandlesBankPayments;
 use Illuminate\Http\Request;
 use App\Models\NotificationLog;
 use App\Models\NotificationTemplate;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class CustomerController extends Controller
 {
@@ -25,8 +30,9 @@ class CustomerController extends Controller
     public function index()
     {
         $pageTitle = $this->pageTitle;
+         $banks = \App\Models\Bank::where('name', '!=', 'Cash')->get(); // Get banks
         $customers = $this->getCustomers()->paginate(getPaginate());
-        return view('admin.customer.list', compact('pageTitle', 'customers'));
+        return view('admin.customer.list', compact('pageTitle', 'customers', 'banks'));
     }
 
     public function customerPDF()
@@ -62,7 +68,99 @@ class CustomerController extends Controller
         $array = [$filename, $name, $headers];
         return $array;
     }
+      public function storeAdvance(Request $request)
+    {
+        $paymentMethod = $request->payment_method;
+        $transactionType = $request->transaction_type;
 
+        // Add the new field to validation
+        $rules = [
+            'customer_id'      => 'required|exists:customers,id',
+            'transaction_type' => 'required|in:advance,payment', // Money Out or Money In
+            'payment_method'   => 'required|in:cash,bank,both',
+            'remarks'          => 'nullable|string|max:255',
+            'amount_cash'      => [Rule::requiredIf(fn() => in_array($paymentMethod, ['cash', 'both'])), 'nullable', 'numeric', 'min:0'],
+            'amount_bank'      => [Rule::requiredIf(fn() => in_array($paymentMethod, ['bank', 'both'])), 'nullable', 'numeric', 'min:0'],
+            'bank_id'          => [Rule::requiredIf(fn() => in_array($paymentMethod, ['bank', 'both'])), 'nullable', 'exists:banks,id'],
+        ];
+        $request->validate($rules);
+
+        $customerId = $request->customer_id;
+        $amount_cash = $request->amount_cash ?? 0;
+        $amount_bank = $request->amount_bank ?? 0;
+        $total_amount = $amount_cash + $amount_bank;
+
+        if ($total_amount <= 0) {
+            $notify[] = ['error', 'Total amount must be greater than zero.'];
+            return back()->withNotify($notify)->withInput();
+        }
+
+        try {
+            $customerTransaction = DB::transaction(function () use ($customerId, $total_amount, $transactionType, $request) {
+
+                $lastTransaction = CustomerTransaction::where('customer_id', $customerId)
+                    ->orderBy('id', 'desc')
+                    ->lockForUpdate()
+                    ->first();
+
+                $openingBalance = $lastTransaction ? $lastTransaction->closing_balance : Customer::findOrFail($customerId)->opening_balance ?? 0.00;
+
+                // --- [NEW] Dynamic Logic Based on Transaction Type ---
+                if ($transactionType == 'advance') { // Money Out
+                    $debitAmount = $total_amount;
+                    $creditAmount = 0.00;
+                    $source = 'Advance Payment';
+                    $closingBalance = $openingBalance + $debitAmount;
+                } else { // 'payment' -> Money In
+                    $creditAmount = $total_amount;
+                    $debitAmount = 0.00;
+                    $source = 'Advance Received';
+                    $closingBalance = $openingBalance - $creditAmount;
+                }
+
+                return CustomerTransaction::create([
+                    'customer_id'     => $customerId,
+                    'credit_amount'   => $creditAmount,
+                    'debit_amount'    => $debitAmount,
+                    'opening_balance' => $openingBalance,
+                    'closing_balance' => $closingBalance,
+                    'source'          => $source,
+                    'bank_id'         => $request->bank_id,
+
+                ]);
+            });
+
+            // --- [NEW] Dynamic Logic for Traits ---
+            $traitTransactionType = ($transactionType == 'advance') ? 'credit' : 'debit';
+            // 'credit' because money is LEAVING your accounts
+            // 'debit' because money is ENTERING your accounts
+
+            $this->handlePaymentTransaction(
+                $request->payment_method,
+                $amount_cash,
+                $amount_bank,
+                $request->bank_id,
+                $customerTransaction->id,
+                'CustomerTransaction',
+                $traitTransactionType // Dynamically set to 'credit' or 'debit'
+            );
+
+            $this->handleDailyBookEntries(
+                $amount_cash,
+                $amount_bank,
+                $traitTransactionType, // Dynamically set to 'credit' or 'debit'
+                $request->payment_method,
+                'CustomerTransaction',
+                $customerTransaction->id
+            );
+
+            $notify[] = ['success', 'Transaction recorded successfully.'];
+            return back()->withNotify($notify);
+        } catch (\Exception $e) {
+            $notify[] = ['error', 'An error occurred: ' . $e->getMessage()];
+            return back()->withNotify($notify)->withInput();
+        }
+    }
     public function store(Request $request, $id = 0)
     {
         $this->validation($request, $id);
