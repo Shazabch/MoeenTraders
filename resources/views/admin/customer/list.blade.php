@@ -12,7 +12,7 @@
                                 <th>@lang('Book Let')</th>
                                 <th>@lang('Mobile') | @lang('Email')</th>
                                 <th>@lang('Opening Balance')</th>
-                                <th>@lang('Advance')</th>
+                                <!-- <th>@lang('Advance')</th> -->
                                 <th>@lang('Receivable')</th>
                                 <th>@lang('Payable')</th>
                                 <th>@lang('Action')</th>
@@ -34,7 +34,7 @@
                                     <span class="fw-bold">{{ $customer->mobile }}</span> <br> {{ $customer->email }}
                                 </td>
                                 <td>{{ number_format($customer->opening_balance, 2) }}</td>
-                                <td>{{ number_format($customer->advance, 2) }}</td>
+                                <!-- <td>{{ number_format($customer->advance, 2) }}</td> -->
                                 <td>{{ showAmount($customer->totalReceivableAmount()) }}</td>
                                 <td>{{ showAmount($customer->totalPayableAmount()) }}</td>
                                 <td>
@@ -136,10 +136,10 @@
                             <label for="opening_balance">Opening Balance</label>
                             <input type="number" step="0.01" name="opening_balance" class="form-control" value="{{ old('opening_balance') }}">
                         </div>
-                        <div class="form-group col-lg-12">
+                        <!-- <div class="form-group col-lg-12">
                             <label for="advance">Advance</label>
                             <input type="number" step="0.01" name="advance" class="form-control" value="{{ old('advance') }}">
-                        </div>
+                        </div> -->
 
                         <div class="col-lg-6">
                             <div class="form-group">

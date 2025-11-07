@@ -396,7 +396,7 @@
                     </table>
                 </div>
                 <div class="row mt-3">
-                    {{-- Row 1: Vehicle & Driver Details (2 columns per row) 
+                    {{-- Row 1: Vehicle & Driver Details (2 columns per row)
                 <div class="col-md-6 col-sm-6">
                     <div class="form-group">
                         <label>@lang('Vehicle Number')</label>
@@ -670,6 +670,9 @@
 
                 window.addEventListener('close-modal', () => {
                     $('#cuModal').modal('hide'); // Close the modal
+                });
+                 window.addEventListener('close-modal-payment', () => {
+                    $('.paymentModalBtn').modal('hide'); // Close the modal
                 });
             </script>
 
